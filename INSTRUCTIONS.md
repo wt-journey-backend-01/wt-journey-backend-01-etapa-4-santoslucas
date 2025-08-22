@@ -146,6 +146,8 @@ A resposta será um JSON contendo seu token de acesso:
 }
 ```
 
+Vale ressaltar que o logout é apenas simbólico (não invalida o JWT).
+
 ### Como Acessar Rotas Protegidas
 
 Para fazer requisições aos endpoints `/agentes` ou `/casos`, você deve incluir o token no cabeçalho `Authorization` com o prefixo `Bearer`.

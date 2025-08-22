@@ -1,14 +1,14 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 4 créditos restantes para usar o sistema de feedback AI.
+Você tem 3 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para santoslucas:
 
-Nota final: **47.0/100**
+Nota final: **85.0/100**
 
 Olá, santoslucas! 👋🚀
 
-Antes de tudo, parabéns pelo esforço e pela dedicação em construir uma API tão robusta, com autenticação JWT, hashing de senhas, proteção de rotas e tudo mais! 🎉 Seu código mostra que você entendeu muito bem os conceitos básicos de segurança, validação e organização em Node.js com Express e PostgreSQL. Além disso, mandou bem implementando o fluxo completo de usuários (registro, login, logout, exclusão e dados do usuário autenticado). Isso é fundamental para qualquer aplicação real! 👏
+Antes de tudo, parabéns pelo esforço e pela dedicação em construir uma API tão robusta, com autenticação JWT, hashing de senhas, proteção de rotas e tudo mais! 🎉 Seu código mostra que você entendeu muito bem os conceitos básicos de segurança, validação e organização em Node.js com Express e PostgreSQL. Além disso, mandou bem implementando o fluxo completo de usuários (registro, login, logout, exclusão e dados do usuário autenticado). Isso é fundamental para qualquer aplicação real! Você estruturou seu projeto de forma muito organizada, seguindo a arquitetura MVC com rotas, controllers e repositories bem separados, o que é ótimo para manutenção e escalabilidade. 👏
 
 ---
 
@@ -26,63 +26,7 @@ Antes de tudo, parabéns pelo esforço e pela dedicação em construir uma API t
 ---
 
 ## 🕵️ Onde o Código Precisa de Atenção (Análise Profunda)
-
-### 1. Estrutura de Diretórios — Atenção à Arquitetura!
-
-Eu percebi que você recebeu uma penalidade relacionada à estrutura do projeto — e, ao analisar o arquivo `project_structure.txt` que você enviou, notei que está faltando a pasta `utils/` com o arquivo `errorHandler.js` e que alguns arquivos talvez não estejam exatamente onde deveriam.
-
-**Por que isso importa?**  
-A estrutura de diretórios padronizada é um requisito obrigatório para garantir que seu projeto seja escalável, fácil de entender e mantenha boas práticas de organização. Além disso, o sistema de testes e avaliação espera encontrar os arquivos em locais específicos para funcionar corretamente.
-
-**Exemplo da estrutura esperada:**
-
-```
-📦 SEU-REPOSITÓRIO
-│
-├── package.json
-├── server.js
-├── .env
-├── knexfile.js
-├── INSTRUCTIONS.md
-│
-├── db/
-│ ├── migrations/
-│ ├── seeds/
-│ └── db.js
-│
-├── routes/
-│ ├── agentesRoutes.js
-│ ├── casosRoutes.js
-│ └── authRoutes.js
-│
-├── controllers/
-│ ├── agentesController.js
-│ ├── casosController.js
-│ └── authController.js
-│
-├── repositories/
-│ ├── agentesRepository.js
-│ ├── casosRepository.js
-│ └── usuariosRepository.js
-│
-├── middlewares/
-│ └── authMiddleware.js
-│
-├── utils/
-│ └── errorHandler.js
-```
-
-**O que fazer?**  
-- Verifique se o arquivo `errorHandler.js` está dentro da pasta `utils/`.  
-- Confirme se todos os demais arquivos estão nas pastas corretas, sem duplicações ou arquivos soltos fora da estrutura.  
-- Organize o projeto conforme o padrão acima, isso evitará problemas futuros e deixará seu código mais profissional.
-
-**Recomendo para entender melhor arquitetura MVC e organização de projetos Node.js:**  
-https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
-
----
-
-### 2. Migrations e UUID: Consistência no Uso de IDs
+### 1. Migrations e UUID: Consistência no Uso de IDs
 
 Notei que na migration da tabela `usuarios` você usou UUID com default gerado por `gen_random_uuid()`, e nas migrations de `agentes` e `casos` também. Isso é ótimo! Porém, na validação dos IDs no `authController.js`, você usa uma regex diferente para UUID que inclui versões específicas (1 a 5), enquanto em outros controllers essa regex é mais genérica:
 
@@ -101,7 +45,7 @@ Se o UUID gerado pelo `gen_random_uuid()` não for da versão 1 a 5, o regex mai
 
 ---
 
-### 3. Testes de Agentes e Casos Estão Falhando — Possível Causa: Dados de Seed e Migrations
+### 2. Testes de Agentes e Casos Estão Falhando — Possível Causa: Dados de Seed e Migrations
 
 Você tem migrations e seeds bem organizados, mas os testes indicam falhas em operações básicas de agentes e casos, como criação, listagem, busca, atualização e exclusão, com erros 400 e 404.
 
@@ -130,7 +74,7 @@ npm run db:reset
 
 ---
 
-### 4. Validação e Tratamento de Erros — Pequenos Ajustes para Melhorar a Experiência
+### 3. Validação e Tratamento de Erros — Pequenos Ajustes para Melhorar a Experiência
 
 Você faz uma boa validação dos dados recebidos, mas algumas mensagens de erro podem ser padronizadas para manter consistência. Por exemplo, no `authController` você usa `{ error: "mensagem" }` e em outros controllers `{ message: "mensagem" }`.
 
@@ -138,7 +82,7 @@ Você faz uma boa validação dos dados recebidos, mas algumas mensagens de erro
 
 ---
 
-### 5. Logout — Implementação Simples, Mas Pode Evoluir
+### 4. Logout — Implementação Simples, Mas Pode Evoluir
 
 Seu endpoint de logout apenas responde com sucesso, mas o JWT continua válido até expirar. Para logout real, seria ideal implementar blacklist ou refresh tokens para invalidar o token.
 

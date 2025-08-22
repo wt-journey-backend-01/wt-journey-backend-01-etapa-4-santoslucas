@@ -82,7 +82,7 @@ async function logout(req, res) {
 async function deleteUser(req, res) {
   const { id } = req.params;
 
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   if (!uuidRegex.test(id)) {
     return res.status(400).json({ error: "ID inválido" });
   }

@@ -2,7 +2,9 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = function (knex) {
+exports.up = async function (knex) {
+  await knex.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
+
   return knex.schema.createTable("usuarios", (table) => {
     table.uuid("id").primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.string("nome").notNullable();
