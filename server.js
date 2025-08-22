@@ -1,5 +1,11 @@
-const express = require('express');
 require('dotenv').config();
+
+if (!process.env.JWT_SECRET) {
+  console.error("Erro: a variável JWT_SECRET não está definida no .env");
+  process.exit(1); 
+}
+
+const express = require('express');
 
 const agentesRoutes = require('./routes/agentesRoutes');
 const casosRoutes = require('./routes/casosRoutes');
