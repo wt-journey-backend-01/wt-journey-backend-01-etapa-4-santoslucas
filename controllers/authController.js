@@ -6,6 +6,22 @@ async function register(req, res) {
   try {
     const { nome, email, senha } = req.body;
 
+    const receivedFields = Object.keys(req.body);
+    const allowedFields = ["nome", "email", "senha"];
+
+    const hasExtraFields = receivedFields.some(field => !allowedFields.includes(field));
+    if (hasExtraFields) {
+      return res.status(400).json({ error: "Campos extras não são permitidos." });
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+    if (!passwordRegex.test(senha)) {
+      return res.status(400).json({
+        error: "Senha fraca: deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais."
+      });
+    }
+
     // Validações básicas
     if (!nome || !email || !senha) {
       return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
@@ -50,14 +66,13 @@ async function login(req, res) {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ acess_token: token });
+    res.status(200).json({ access_token: token });
   } catch (error) {
     res.status(500).json({ error: "Erro no login" });
   }
 }
 
 async function logout(req, res) {
-  // Para JWT, basta invalidar no cliente
   res.status(200).json({ message: "Logout realizado com sucesso" });
 }
 
