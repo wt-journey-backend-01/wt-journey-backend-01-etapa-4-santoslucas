@@ -7,8 +7,16 @@ async function register(req, res) {
     const { nome, email, senha } = req.body;
 
     // Validações básicas
-    if (!nome || !email || !senha) {
-      return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
+    if (typeof nome !== 'string' || nome.trim() === '') {
+      return res.status(400).json({ error: "O campo 'nome' é obrigatório e não pode estar vazio." });
+    }
+
+    if (typeof email !== 'string' || email.trim() === '') {
+      return res.status(400).json({ error: "O campo 'email' é obrigatório e não pode estar vazio." });
+    }
+
+    if (typeof senha !== 'string' || senha.trim() === '') {
+      return res.status(400).json({ error: "O campo 'senha' é obrigatório e não pode estar vazio." });
     }
 
     const receivedFields = Object.keys(req.body);

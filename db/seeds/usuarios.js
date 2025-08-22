@@ -1,3 +1,7 @@
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> } 
+ */
 const bcrypt = require('bcrypt');
 
 exports.seed = async function (knex) {
