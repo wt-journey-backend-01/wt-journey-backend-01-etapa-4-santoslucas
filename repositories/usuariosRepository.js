@@ -12,4 +12,8 @@ async function deleteUser(id) {
   return await db("usuarios").where({ id }).del();
 }
 
-module.exports = { createUser, findByEmail, deleteUser };
+async function findById(id) {
+  return await db("usuarios").where({ id }).first();
+}
+
+module.exports = { createUser, findByEmail, deleteUser, findById };

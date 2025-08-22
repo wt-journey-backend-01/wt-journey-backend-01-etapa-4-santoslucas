@@ -1,4 +1,3 @@
-// English comments as requested by the user.
 const casosRepository = require('../repositories/casosRepository');
 const agentesRepository = require('../repositories/agentesRepository');
 

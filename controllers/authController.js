@@ -6,6 +6,11 @@ async function register(req, res) {
   try {
     const { nome, email, senha } = req.body;
 
+    // Validações básicas
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
+    }
+
     const receivedFields = Object.keys(req.body);
     const allowedFields = ["nome", "email", "senha"];
 
@@ -20,11 +25,6 @@ async function register(req, res) {
       return res.status(400).json({
         error: "Senha fraca: deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais."
       });
-    }
-
-    // Validações básicas
-    if (!nome || !email || !senha) {
-      return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
     }
 
     // Verifica email já usado
@@ -66,7 +66,7 @@ async function login(req, res) {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ access_token: token });
+    res.status(200).json({ acess_token: token });
   } catch (error) {
     res.status(500).json({ error: "Erro no login" });
   }
@@ -76,4 +76,28 @@ async function logout(req, res) {
   res.status(200).json({ message: "Logout realizado com sucesso" });
 }
 
-module.exports = { register, login, logout };
+async function deleteUser(req, res) {
+  try {
+    const deleted = await usuariosRepository.deleteUser(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+}
+
+async function getMe(req, res) {
+  try {
+    const user = await usuariosRepository.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    res.status(200).json({ id: user.id, nome: user.nome, email: user.email });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar dados do usuário" });
+  }
+}
+
+module.exports = { register, login, logout, deleteUser, getMe };

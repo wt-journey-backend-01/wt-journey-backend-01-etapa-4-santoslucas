@@ -104,8 +104,8 @@ A API agora está protegida com autenticação baseada em JSON Web Token (JWT). 
 ### Fluxo de Autenticação
 
 1.  **Registro**: Crie uma nova conta de usuário no endpoint `POST /auth/register`.
-2.  **Login**: Faça login com seu email e senha no endpoint `POST /auth/login` para receber um `access_token`.
-3.  **Acesso Protegido**: Inclua o `access_token` no cabeçalho `Authorization` de todas as suas requisições para as rotas protegidas (`/agentes`, `/casos`).
+2.  **Login**: Faça login com seu email e senha no endpoint `POST /auth/login` para receber um `acess_token`.
+3.  **Acesso Protegido**: Inclua o `acess_token` no cabeçalho `Authorization` de todas as suas requisições para as rotas protegidas (`/agentes`, `/casos`).
 
 ### Como Registrar um Usuário
 
@@ -139,7 +139,7 @@ curl -X POST http://localhost:3000/auth/login \
 A resposta será um JSON contendo seu token de acesso:
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ1c3VhcmlvQGV4ZW1wbG8uY29tIiwiaWF0IjoxNzE1ODg0NDAwLCJleHAiOjE3MTU4ODgwMDB9.somerandomsignature"
+  "acess_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ1c3VhcmlvQGV4ZW1wbG8uY29tIiwiaWF0IjoxNzE1ODg0NDAwLCJleHAiOjE3MTU4ODgwMDB9.somerandomsignature"
 }
 ```
 
