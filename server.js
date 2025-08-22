@@ -5,13 +5,13 @@ const agentesRoutes = require('./routes/agentesRoutes');
 const casosRoutes = require('./routes/casosRoutes');
 const authRoutes = require("./routes/authRoutes");
 const { globalErrorHandler } = require('./utils/errorHandler');
-const swaggerDocs = require('./docs/swagger');
+// const swaggerDocs = require('./docs/swagger');
 const authMiddleware = require("./middlewares/authMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// app.use(express.json());
 
 // Rotas públicas
 app.use("/auth", authRoutes);
@@ -20,7 +20,7 @@ app.use("/auth", authRoutes);
 app.use("/agentes", authMiddleware, agentesRoutes);
 app.use("/casos", authMiddleware, casosRoutes);
 
-swaggerDocs(app);
+// swaggerDocs(app);
 
 app.use(globalErrorHandler);
 
