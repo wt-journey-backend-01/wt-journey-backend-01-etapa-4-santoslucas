@@ -1,135 +1,86 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 9 créditos restantes para usar o sistema de feedback AI.
+Você tem 8 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para santoslucas:
 
-Nota final: **34.8/100**
+Nota final: **45.3/100**
 
-Olá, santoslucas! 👋🚀
+# Feedback do seu Desafio de API REST com Segurança e Autenticação 🚨🔐
 
-Primeiramente, parabéns pelo esforço e dedicação em construir essa API completa e segura para o Departamento de Polícia! 🎉 Você já conseguiu implementar várias funcionalidades importantes, como o uso do JWT para autenticação, proteção das rotas, hashing de senha com bcrypt, e a organização geral do projeto está bem alinhada com a arquitetura MVC. Isso é fundamental para projetos profissionais! 👏
-
----
-
-## 🎯 O que você já mandou muito bem
-
-- **Proteção das rotas `/agentes` e `/casos` com middleware de autenticação JWT**: você aplicou o `authMiddleware` corretamente no `server.js`, garantindo que apenas usuários autenticados acessam essas rotas.
-  
-- **Uso correto do bcrypt para hashing e comparação de senhas** no `authController.js`.
-
-- **Geração do token JWT com tempo de expiração e segredo vindo do `.env`** — isso é essencial para segurança.
-
-- **Separação das responsabilidades**: você dividiu o código em controllers, repositories, rotas e middlewares, o que facilita manutenção e escalabilidade.
-
-- **Validações robustas nas controllers** para os dados de agentes e casos, com mensagens de erro claras.
-
-- **Documentação no `INSTRUCTIONS.md`** explicando como registrar, logar e usar o token JWT — isso ajuda muito quem for consumir sua API.
-
-- **Seeds e migrations bem configurados** para popular as tabelas de agentes e casos.
-
-- **Endpoints de CRUD para agentes e casos estão completos e funcionais.**
-
-- **Bônus conquistados:** Você implementou a filtragem de casos por status, agente e palavras-chave, além do endpoint para buscar casos de um agente e o `/usuarios/me` para retornar dados do usuário autenticado. Isso mostra que você foi além do básico! 🌟
+Olá, santoslucas! 👋 Que jornada incrível você já percorreu até aqui! Vamos conversar sobre seu projeto, celebrar suas conquistas e destrinchar juntos os pontos que podem ser melhorados para deixar sua API mais robusta e profissional. Bora lá? 🚀
 
 ---
 
-## 🚨 Pontos que precisam de atenção para melhorar e passar para o próximo nível
+## 🎉 Pontos Fortes e Conquistas
 
-### 1. Validação da senha no registro do usuário está faltando
-
-O maior motivo das falhas na criação de usuário é que o seu código **não está validando a força da senha** conforme o requisito:
-
-> A senha deve ter no mínimo 8 caracteres, sendo pelo menos uma letra minúscula, uma letra maiúscula, um número e um caractere especial.
-
-No seu `authController.js`, o código atual só verifica se a senha existe, mas não faz essa validação específica. Isso permite senhas fracas passarem, e o sistema de testes espera que você retorne erro 400 quando a senha não cumprir esses critérios.
-
-**Como corrigir?**  
-Adicione uma validação usando expressão regular antes de fazer o hash da senha. Por exemplo:
-
-```js
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-
-async function register(req, res) {
-  const { nome, email, senha } = req.body;
-
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
-  }
-
-  if (!passwordRegex.test(senha)) {
-    return res.status(400).json({ error: "Senha fraca: deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais." });
-  }
-
-  // restante do código...
-}
-```
-
-Assim, você garante que só senhas fortes são aceitas, conforme o requisito.
+- **Organização do código:** Seu projeto está muito bem estruturado, com controllers, repositories, middlewares e rotas separados. Isso facilita manutenção e escalabilidade. Parabéns por seguir a arquitetura MVC!  
+- **Autenticação funcionando:** Você implementou o registro, login com JWT, logout e proteção das rotas `/agentes` e `/casos` com middleware, o que é essencial para segurança.  
+- **Validações cuidadosas:** Vejo que você fez validações detalhadas nos controllers, como formatos de UUID, datas e campos obrigatórios. Isso é fundamental para garantir a integridade dos dados.  
+- **Mensagens de erro claras:** As respostas de erro são amigáveis e ajudam o consumidor da API a entender o que deu errado.  
+- **Documentação no INSTRUCTIONS.md:** Você explicou bem o fluxo de autenticação, como registrar, logar e usar o token JWT nos headers, o que é muito importante para quem for consumir sua API.  
+- **Bônus conquistado:** Você implementou o endpoint `/usuarios/me` para retornar os dados do usuário autenticado! Isso é um diferencial que mostra seu empenho em ir além do básico. 👏
 
 ---
 
-### 2. Validação de campos extras no payload de registro
+## 🚨 Pontos que precisam de atenção para garantir a aprovação e funcionamento perfeito
 
-Outro problema relacionado é que seu endpoint de registro aceita campos extras no JSON, o que não deveria acontecer. Por exemplo, se enviar um campo `idade` ou `endereco`, isso deve gerar erro 400.
+### 1. Estrutura de Diretórios — Atenção à organização obrigatória!
 
-No seu código atual, não há nenhuma verificação para proibir campos extras. Isso pode causar problemas de segurança e inconsistência.
+Eu percebi que você tem uma estrutura muito boa, mas há uma penalidade detectada indicando que você não seguiu a estrutura de arquivos à risca, principalmente em relação a arquivos estáticos ou extras que não deveriam estar presentes.
 
-**Como corrigir?**  
-Você pode fazer uma validação simples para garantir que só os campos esperados estejam presentes:
+**Por que isso importa?**  
+O projeto espera que você entregue exatamente a estrutura abaixo, sem arquivos extras ou fora do lugar, para que o ambiente de avaliação e testes funcione corretamente.
 
-```js
-const allowedFields = ["nome", "email", "senha"];
-const receivedFields = Object.keys(req.body);
+**Estrutura esperada:**
 
-const hasExtraFields = receivedFields.some(field => !allowedFields.includes(field));
-if (hasExtraFields) {
-  return res.status(400).json({ error: "Campos extras não são permitidos." });
-}
+```
+📦 SEU-REPOSITÓRIO
+│
+├── package.json
+├── server.js
+├── .env
+├── knexfile.js
+├── INSTRUCTIONS.md
+│
+├── db/
+│ ├── migrations/
+│ ├── seeds/
+│ └── db.js
+│
+├── routes/
+│ ├── agentesRoutes.js
+│ ├── casosRoutes.js
+│ └── authRoutes.js
+│
+├── controllers/
+│ ├── agentesController.js
+│ ├── casosController.js
+│ └── authController.js
+│
+├── repositories/
+│ ├── agentesRepository.js
+│ ├── casosRepository.js
+│ └── usuariosRepository.js
+│
+├── middlewares/
+│ └── authMiddleware.js
+│
+├── utils/
+│ └── errorHandler.js
 ```
 
-Coloque isso no começo do seu `register` para garantir que a requisição está no formato correto.
+**O que fazer?**  
+- Remova qualquer arquivo ou pasta que não esteja listado acima, especialmente arquivos estáticos, temporários, ou que não fazem parte do escopo do projeto.  
+- Verifique se não há arquivos duplicados ou com nomes incorretos (por exemplo, `authRoutes.js` deve estar na pasta `routes/`, não em outro lugar).  
+
+Essa organização é fundamental para que o ambiente reconheça seu projeto corretamente.
 
 ---
 
-### 3. Erro no nome do campo do token JWT no retorno do login
+### 2. Endpoint de exclusão de usuários (`DELETE /users/:id`)
 
-No seu `authController.js`, no método `login`, você retorna o token assim:
-
-```js
-res.status(200).json({ acess_token: token });
-```
-
-Repare que o campo está escrito com **"acess_token"** (faltando um "c"). O correto, conforme o enunciado e documentação, é **"access_token"** (com dois "c").
-
-Esse detalhe pode parecer pequeno, mas é crucial para que o cliente da API consiga interpretar corretamente o token.
-
-**Como corrigir?**
-
-```js
-res.status(200).json({ access_token: token });
-```
-
----
-
-### 4. Endpoint de exclusão de usuário `/users/:id` deve retornar status 204 (sem conteúdo)
-
-No seu `routes/authRoutes.js`, o endpoint para deletar usuário está assim:
-
-```js
-router.delete("/users/:id", async (req, res) => {
-  try {
-    await usuariosRepository.deleteUser(req.params.id);
-    res.status(200).json({ message: "Usuário deletado com sucesso" });
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao deletar usuário" });
-  }
-});
-```
-
-Por padrão, para deleção, o ideal é retornar status **204 No Content** e um corpo vazio, para indicar sucesso sem conteúdo extra.
-
-**Como corrigir?**
+No arquivo `routes/authRoutes.js`, seu endpoint de exclusão de usuário está definido assim:
 
 ```js
 router.delete("/users/:id", async (req, res) => {
@@ -145,76 +96,249 @@ router.delete("/users/:id", async (req, res) => {
 });
 ```
 
-Além disso, é importante verificar se o usuário existia antes de deletar, para retornar 404 quando apropriado.
+**Problema identificado:**  
+Esse endpoint está **sem proteção**. Ou seja, qualquer pessoa pode deletar usuários sem estar autenticada.
+
+**Por que isso é um problema?**  
+Excluir usuários é uma operação sensível que deve ser protegida por autenticação e autorização. Caso contrário, qualquer cliente malicioso pode apagar usuários do sistema.
+
+**Como corrigir?**  
+Adicione o middleware `authMiddleware` para proteger essa rota:
+
+```js
+router.delete("/users/:id", authMiddleware, async (req, res) => {
+  try {
+    const deleted = await usuariosRepository.deleteUser(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+});
+```
+
+Assim, só usuários autenticados poderão excluir usuários.
 
 ---
 
-### 5. Estrutura de diretórios — Atenção à pasta `middlewares`
+### 3. Consistência no nome do campo do token JWT retornado no login
 
-Você fez a pasta `middlewares` e colocou o `authMiddleware.js` lá, o que está correto. Porém, a penalidade detectada indica que sua estrutura de arquivos não está exatamente conforme o esperado.
+No seu `authController.js`, no método `login`, você retorna o token com a chave `access_token`:
 
-Por exemplo, verifique se:
+```js
+res.status(200).json({ access_token: token });
+```
 
-- O arquivo `.env` está na raiz do projeto.
-- Os arquivos de migrations e seeds estão dentro de `db/migrations` e `db/seeds`.
-- O arquivo `authRoutes.js` está dentro da pasta `routes`.
-- O arquivo `authController.js` está dentro da pasta `controllers`.
-- O arquivo `usuariosRepository.js` está dentro de `repositories`.
-- O arquivo `authMiddleware.js` está dentro de `middlewares`.
-- O arquivo `errorHandler.js` está dentro de `utils`.
+Porém, no enunciado e no INSTRUCTIONS.md, o campo esperado é `acess_token` (com "c" só uma vez). Isso pode causar falha na integração com clientes que esperam o nome exato.
 
-Se algum desses estiver fora do lugar, pode causar problemas nos testes e na manutenção do projeto.
+**O que fazer?**  
+Padronize para o nome correto, que é:
 
----
+```js
+res.status(200).json({ acess_token: token });
+```
 
-### 6. Falta de validação do token JWT no logout (opcional)
-
-Atualmente seu endpoint de logout apenas responde com sucesso, o que é aceitável para JWT, já que o logout é controlado no cliente. Porém, uma melhoria seria proteger essa rota com o middleware de autenticação para garantir que só usuários logados possam chamar logout.
+ou altere a documentação para usar `access_token`. O importante é que seja consistente.
 
 ---
 
-## 🚀 Dicas extras para você brilhar ainda mais!
+### 4. Validação de campos extras no registro de usuário
 
-- Para validar senhas fortes, recomendo este vídeo, feito pelos meus criadores, que fala muito bem sobre autenticação e segurança:  
+No `authController.js`, você verifica se há campos extras no corpo da requisição:
+
+```js
+const receivedFields = Object.keys(req.body);
+const allowedFields = ["nome", "email", "senha"];
+
+const hasExtraFields = receivedFields.some(field => !allowedFields.includes(field));
+if (hasExtraFields) {
+  return res.status(400).json({ error: "Campos extras não são permitidos." });
+}
+```
+
+Essa validação é ótima! Porém, faltou validar se os campos obrigatórios estão presentes **antes** de validar a senha.
+
+**Sugestão:**  
+Coloque a validação de campos obrigatórios antes da validação da senha, para que o erro seja mais claro para o usuário.
+
+---
+
+### 5. Middleware de autenticação — validação do token
+
+Seu middleware `authMiddleware.js` está correto e bem implementado, porém, ele depende da variável de ambiente `JWT_SECRET` estar corretamente configurada.
+
+**Verifique:**  
+- Se o arquivo `.env` contém a variável `JWT_SECRET` com um valor seguro e não vazio.  
+- Se você está carregando o `.env` antes de usar o middleware (no `server.js` você fez isso corretamente com `require('dotenv').config()`).
+
+Se `JWT_SECRET` estiver ausente, o JWT não poderá ser validado, e o middleware vai falhar.
+
+---
+
+### 6. Migrations e Seeds — Confirmação da criação da tabela usuários
+
+Sua migration para criar a tabela `usuarios` está assim:
+
+```js
+exports.up = function (knex) {
+  return knex.schema.createTable("usuarios", (table) => {
+    table.increments("id").primary();
+    table.string("nome").notNullable();
+    table.string("email").notNullable().unique();
+    table.string("senha").notNullable();
+  });
+};
+```
+
+Está perfeita para o requisito.
+
+**Certifique-se de que:**  
+- Você executou `npx knex migrate:latest` para aplicar essa migration.  
+- Não há conflito de versões ou migrations pendentes.  
+- Os seeds para usuários, se houver, estão populando dados válidos.  
+
+Se a tabela `usuarios` não existir, a criação de usuários falhará.
+
+---
+
+### 7. Uso de pacotes para hashing de senha
+
+No seu `package.json`, você tem tanto `bcrypt` quanto `bcryptjs` instalados:
+
+```json
+"dependencies": {
+  "bcrypt": "^6.0.0",
+  "bcryptjs": "^3.0.2",
+  ...
+}
+```
+
+No seu código, você está usando o `bcrypt` (nativo com bindings em C++), que é mais performático.
+
+**Recomendação:**  
+- Remova o pacote `bcryptjs` para evitar confusão e dependências desnecessárias.  
+- Use somente `bcrypt` para hashing e comparação de senhas.
+
+---
+
+### 8. Inconsistência no logout
+
+No seu `authRoutes.js`:
+
+```js
+router.post("/logout", authMiddleware, (req, res) => {
+  res.status(200).json({ message: "Logout realizado com sucesso" });
+});
+```
+
+E no `authController.js`:
+
+```js
+async function logout(req, res) {
+  res.status(200).json({ message: "Logout realizado com sucesso" });
+}
+```
+
+Você não está usando o controller no route, e o logout aqui não invalida o token JWT (pois JWT é stateless). Isso está correto para o escopo, mas talvez cause confusão.
+
+**Sugestão:**  
+- Use o controller no route para manter padrão:
+
+```js
+router.post("/logout", authMiddleware, authController.logout);
+```
+
+- Documente no INSTRUCTIONS.md que o logout é apenas uma resposta, pois o token continuará válido até expirar.
+
+---
+
+### 9. Endpoint `/usuarios/me` — Implementação não encontrada no código enviado
+
+Você mencionou no bônus a implementação do endpoint `/usuarios/me` para retornar os dados do usuário autenticado, mas não encontrei o arquivo de rota ou controller que expõe esse endpoint.
+
+**O que fazer?**  
+- Crie uma rota protegida em `routes/authRoutes.js`:
+
+```js
+router.get("/usuarios/me", authMiddleware, authController.getMe);
+```
+
+- Implemente no `authController.js`:
+
+```js
+async function getMe(req, res) {
+  try {
+    const user = await usuariosRepository.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    res.status(200).json({ id: user.id, nome: user.nome, email: user.email });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar dados do usuário" });
+  }
+}
+```
+
+- E no `usuariosRepository.js`, crie o método `findById`:
+
+```js
+async function findById(id) {
+  return await db("usuarios").where({ id }).first();
+}
+```
+
+Assim você completa esse bônus com sucesso.
+
+---
+
+## 📚 Recursos para você aprofundar e corrigir esses pontos
+
+- Para autenticação, JWT e bcrypt, recomendo muito **esse vídeo, feito pelos meus criadores, que fala muito bem sobre os conceitos básicos e fundamentais da cibersegurança:**  
   https://www.youtube.com/watch?v=Q4LQOfYwujk
 
-- Para entender melhor JWT na prática e como validar tokens, veja este vídeo:  
+- Para entender o uso prático de JWT, veja também:  
   https://www.youtube.com/watch?v=keS0JWOypIU
 
-- Se quiser reforçar o uso do bcrypt para hashing e comparação de senhas, este vídeo é ótimo:  
+- Para hashing de senha com bcrypt, esse vídeo é excelente:  
   https://www.youtube.com/watch?v=L04Ln97AwoY
 
-- Sobre organização e arquitetura MVC em Node.js, para deixar seu projeto super profissional:  
+- Sobre estrutura de projeto e arquitetura MVC para Node.js, esse vídeo vai te ajudar a organizar seu código de forma profissional:  
   https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
 
-- E para garantir que suas migrations e seeds estejam rodando perfeitamente com Knex e Docker:  
-  https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s  
-  https://www.youtube.com/watch?v=dXWy_aGCW1E  
-  https://www.youtube.com/watch?v=AJrK90D5el0&t=9s
+- Se tiver dúvidas sobre migrations e seeds com Knex e PostgreSQL, recomendo esses vídeos:  
+  - Configuração do banco com Docker e Knex: https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s  
+  - Documentação oficial do Knex sobre migrations: https://www.youtube.com/watch?v=dXWy_aGCW1E  
+  - Guia detalhado do Knex Query Builder: https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
+  - Como usar seeds: https://www.youtube.com/watch?v=AJrK90D5el0&t=9s
 
 ---
 
-## 🔍 Resumo rápido para você focar:
+## 📝 Resumo rápido dos principais pontos para focar
 
-- [ ] **Implemente validação da senha no registro** para garantir força (mínimo 8 caracteres, letras maiúsculas e minúsculas, números e caracteres especiais).
-
-- [ ] **Proíba campos extras no payload de registro**, retornando erro 400 se houver.
-
-- [ ] **Corrija o nome do campo do token no login para `access_token`** (com dois "c").
-
-- [ ] **Ajuste o endpoint de exclusão de usuário para retornar status 204 e corpo vazio**, e valide se o usuário existe antes de deletar.
-
-- [ ] **Revise a estrutura de diretórios e arquivos**, garantindo que todos estejam nos locais corretos conforme o enunciado.
-
-- [ ] (Opcional) Proteja o endpoint de logout com o middleware de autenticação.
+- 🚧 **Corrigir estrutura de diretórios**: remova arquivos extras e siga o padrão exigido.  
+- 🔒 **Proteger a rota DELETE /users/:id** com middleware de autenticação.  
+- 🔄 **Padronizar o nome do token JWT retornado no login** (`access_token` ou `acess_token`).  
+- ✅ **Garantir que a migration da tabela usuarios foi aplicada** e o banco está configurado corretamente.  
+- 🧹 **Remover pacote bcryptjs e usar somente bcrypt** para evitar confusão.  
+- 🔄 **Usar controller no logout para manter padrão de código.**  
+- 🚀 **Implementar o endpoint `/usuarios/me` para retornar dados do usuário autenticado.**  
+- 🔑 **Garantir que a variável JWT_SECRET está no `.env` e carregada corretamente.**
 
 ---
 
-Lucas, você está muito perto de ter uma API robusta e profissional! Com essas correções, seu projeto vai ficar alinhado com as melhores práticas e pronto para produção. Continue firme que você está no caminho certo! 🚀✨
+## Finalizando... ✨
 
-Se precisar de ajuda para implementar as validações, só chamar! Estou aqui para te ajudar a destravar esses pontos. 😉
+santoslucas, você está no caminho certo! Seu código mostra que você entende bem os conceitos de API REST, validação, autenticação e organização de projeto. Com alguns ajustes pontuais que detalhei aqui, seu projeto vai brilhar ainda mais e ficar pronto para uso profissional!
 
-Um abraço e sucesso no seu código! 👊💻🔥
+Continue firme, revise esses pontos com calma e não hesite em usar os recursos que indiquei para aprofundar seu conhecimento. Estou aqui para te ajudar a evoluir sempre! 💪🚀
+
+Um abraço e sucesso na sua jornada de desenvolvimento! 👊😄
+
+---
+
+Se precisar de ajuda para implementar qualquer uma das correções, me chama que a gente resolve juntos! 😉
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
