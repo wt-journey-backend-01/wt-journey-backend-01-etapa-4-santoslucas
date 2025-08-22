@@ -1,70 +1,40 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 7 créditos restantes para usar o sistema de feedback AI.
+Você tem 6 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para santoslucas:
 
-Nota final: **7.5/100**
+Nota final: **22.5/100**
 
-# Feedback do seu Code Buddy 🚀✨
+Olá, santoslucas! 👋🚀
 
-Olá, santoslucas! Que bom te ver por aqui! 😊 Primeiro, quero parabenizar você por todo o esforço e pelo progresso que já fez no seu projeto. Construir uma API REST segura com Node.js, Express e PostgreSQL não é tarefa fácil, e você já tem uma base muito sólida, especialmente na organização dos controllers, repositories e rotas. 👏👏
+Antes de mais nada, quero parabenizá-lo pelo esforço e dedicação em construir essa API completa para o Departamento de Polícia! Você já entregou várias funcionalidades importantes, como a criação, listagem e manipulação de agentes e casos, além de implementar autenticação com JWT e proteção das rotas — isso é fantástico! 🎉👏
 
----
-
-## 🎉 Pontos Positivos e Conquistas Bônus
-
-- Sua implementação das rotas e controllers para agentes e casos está muito bem feita, com validações claras e mensagens de erro amigáveis.
-- O uso das expressões regulares para validar UUIDs e datas mostra cuidado com a qualidade dos dados.
-- A autenticação via JWT está integrada, com middleware para proteger rotas sensíveis.
-- Você implementou o endpoint `/usuarios/me` para retornar os dados do usuário autenticado, que é um bônus muito relevante! 🌟
-- A filtragem dos casos e agentes, incluindo pesquisa por palavra-chave e ordenação, está implementada corretamente, o que é um diferencial bacana no seu projeto.
+Além disso, você também conseguiu implementar o endpoint **/usuarios/me** para retornar os dados do usuário autenticado, e a filtragem complexa por status, agente e palavras-chave nos casos, o que mostra que você está avançando rumo a uma API robusta e profissional. 💪✨
 
 ---
 
-## 🚨 Pontos de Atenção e Como Melhorar
-
-### 1. Estrutura do Projeto e Arquivos Obrigatórios
-
-**O que eu percebi:**  
-Na estrutura do seu projeto, o arquivo `.env` está presente na raiz, o que é esperado, mas você não enviou o arquivo `docker-compose.yml` para subir o container do PostgreSQL. Isso é uma exigência do desafio para garantir que o ambiente seja reproduzível e que os testes funcionem corretamente.  
-
-Além disso, a estrutura das pastas está quase perfeita, mas você deve garantir que todos os arquivos obrigatórios estejam presentes e que a estrutura seja exatamente a que foi especificada, incluindo os arquivos de migrations e seeds.  
-
-**Por que isso importa:**  
-Sem o `docker-compose.yml`, o ambiente de banco não pode ser facilmente inicializado, o que prejudica a execução do projeto em outros ambientes. Seguir a estrutura correta é importante para manter o padrão do desafio e facilitar a manutenção e escalabilidade do projeto.
-
-**Como consertar:**  
-- Crie o arquivo `docker-compose.yml` na raiz do projeto com a configuração para subir o container do PostgreSQL.  
-- Verifique se todas as migrations e seeds estão na pasta correta (`db/migrations` e `db/seeds`).  
-- Mantenha o `.env` na raiz, mas **não o envie para repositórios públicos** por questões de segurança.
-
-**Recurso recomendado:**  
-Para entender melhor como configurar o banco PostgreSQL com Docker e conectar com o Knex, veja este vídeo feito pelos meus criadores:  
-👉 [Configuração de Banco de Dados com Docker e Knex](https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s)
+## Vamos analisar com calma os pontos que precisam de atenção para você destravar 100% do seu projeto:
 
 ---
 
-### 2. Validação dos Campos no Registro de Usuário (authController.js)
+### 1. Estrutura dos Diretórios: ⚠️
 
-**O que eu percebi:**  
-Você implementou várias validações importantes no registro, como verificar campos extras, validar a força da senha e checar se o email já está em uso. Porém, os testes indicam que seu código não está retornando erro 400 para casos em que o nome, email ou senha estão vazios ou nulos, ou quando a senha não atende aos critérios mínimos.
+Eu dei uma boa olhada na estrutura do seu projeto e percebi que, apesar de você ter os arquivos principais, há uma **penalidade por não seguir a estrutura de arquivos à risca**.
 
-O trecho do seu código que valida os campos é este:
+Por exemplo, no seu projeto, você tem a pasta `db/migrations` e `db/seeds`, o que está correto. Porém, o arquivo de migration para criar a tabela `usuarios` está nomeado e posicionado corretamente, mas é importante garantir que o arquivo `usuariosRepository.js` esteja dentro da pasta `repositories/` e que o middleware `authMiddleware.js` esteja dentro da pasta `middlewares/` — o que você fez corretamente. 
 
-```js
-if (!nome || !email || !senha) {
-  return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
-}
-```
+**Porém, é fundamental que você mantenha exatamente a estrutura solicitada para evitar problemas futuros, especialmente para manter o padrão MVC e facilitar a manutenção do código.**
 
-O problema é que essa checagem simples não diferencia entre valores vazios (`""`) e valores nulos ou ausentes, e também não valida cada campo individualmente para mensagens de erro mais específicas.
+---
 
-**Por que isso importa:**  
-Validar corretamente os dados de entrada é crucial para uma API segura e confiável. Além disso, retornar mensagens específicas ajuda o usuário da API a entender o que está errado.
+### 2. Validação dos Campos no Registro de Usuário: 🚨
 
-**Como consertar:**  
-Faça validações específicas para cada campo, verificando se são strings não vazias. Por exemplo:
+Aqui encontrei o principal motivo pelo qual você está recebendo muitos erros 400 ao tentar criar usuários com dados inválidos.
+
+No seu `authController.js`, você fez validações básicas, o que é ótimo, mas o problema está no tratamento de campos vazios, nulos e na validação da senha.
+
+Veja este trecho do seu código:
 
 ```js
 if (typeof nome !== 'string' || nome.trim() === '') {
@@ -80,39 +50,48 @@ if (typeof senha !== 'string' || senha.trim() === '') {
 }
 ```
 
-Assim, você garante que valores vazios ou nulos sejam tratados corretamente.
+**Por que isso pode não ser suficiente?**
 
-**Recurso recomendado:**  
-Para aprofundar seu conhecimento em autenticação e boas práticas de validação, recomendo este vídeo feito pelos meus criadores:  
-👉 [Conceitos básicos e fundamentais da cibersegurança](https://www.youtube.com/watch?v=Q4LQOfYwujk)
-
----
-
-### 3. Validação da Senha no Registro
-
-**O que eu percebi:**  
-Você usa a regex para validar a senha:
+- Se o campo for `null`, `undefined` ou não enviado, o `typeof` pode não ser `'string'`, mas você não está tratando explicitamente esses casos.
+- Além disso, o teste pede para garantir que campos nulos também disparem erro 400, e que a senha tenha uma validação mais rigorosa.
+  
+Para cobrir esses casos, recomendo uma validação mais robusta, por exemplo:
 
 ```js
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-
-if (!passwordRegex.test(senha)) {
-  return res.status(400).json({
-    error: "Senha fraca: deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais."
-  });
+if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
+  return res.status(400).json({ error: "O campo 'nome' é obrigatório e não pode estar vazio ou nulo." });
 }
 ```
 
-Isso está correto, mas os testes falharam para casos específicos, como senha sem números, sem caractere especial, etc. Isso pode indicar que a regex está correta, mas a validação anterior (verificação se o campo senha é vazio ou nulo) não está sendo aplicada antes, causando erros ou comportamentos inesperados.
-
-**Como consertar:**  
-Garanta que a validação de existência e tipo do campo senha seja feita antes de aplicar a regex.
+Assim, você cobre `null`, `undefined`, strings vazias e espaços em branco.
 
 ---
 
-### 4. Validação de Campos Extras no Registro
+### 3. Validação da Senha: 🛡️
 
-Você fez uma checagem para campos extras:
+Você está usando esta regex para validar a senha:
+
+```js
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+```
+
+Isso está correto para garantir:
+
+- Pelo menos uma letra minúscula
+- Pelo menos uma letra maiúscula
+- Pelo menos um número
+- Pelo menos um caractere especial
+- Mínimo 8 caracteres
+
+Porém, o erro que está acontecendo é que, em alguns casos, a validação não está disparando o erro 400 esperado, provavelmente porque o campo senha está vindo `null` ou não está sendo enviado.
+
+**Dica:** Antes de aplicar a regex, verifique se a senha é uma string válida e não vazia, como no ponto anterior. Isso evita que a regex seja aplicada em algo que não é string e cause erros inesperados.
+
+---
+
+### 4. Verificação de Campos Extras no Registro: ✅
+
+Você fez uma verificação para campos extras:
 
 ```js
 const receivedFields = Object.keys(req.body);
@@ -124,78 +103,192 @@ if (hasExtraFields) {
 }
 ```
 
-Essa parte está ótima! Ela evita que dados inesperados sejam enviados.
+Isso está ótimo! Essa validação ajuda a garantir que seu endpoint aceite apenas os campos esperados.
 
 ---
 
-### 5. Exclusão de Usuário (authController.js)
+### 5. Tratamento do Email Já Existente: ✅
 
-Na função `deleteUser`, você remove o usuário pelo ID, mas não está validando se o ID recebido é um número (já que no banco a chave é `increments`, ou seja, um inteiro). Isso pode causar falhas silenciosas ou erros inesperados.
-
-**Como consertar:**  
-Adicione uma validação para garantir que o ID seja um número inteiro positivo. Exemplo:
+Você também verificou se o email já está em uso:
 
 ```js
-const id = parseInt(req.params.id, 10);
-if (isNaN(id) || id <= 0) {
-  return res.status(400).json({ error: "ID inválido." });
+const existingUser = await usuariosRepository.findByEmail(email);
+if (existingUser) {
+  return res.status(400).json({ error: "Email já está em uso" });
+}
+```
+
+Perfeito! Isso previne duplicidade e está de acordo com o esperado.
+
+---
+
+### 6. Resposta do Registro: ⚠️
+
+No seu código, após criar o usuário, você responde assim:
+
+```js
+res.status(201).json({ id: newUser.id, nome: newUser.nome, email: newUser.email });
+```
+
+Isso está correto e atende ao requisito.
+
+---
+
+### 7. Middleware de Autenticação: ✅
+
+Seu middleware `authMiddleware.js` está bem implementado, validando o token JWT e adicionando `req.user`.
+
+```js
+const decoded = jwt.verify(token, process.env.JWT_SECRET);
+req.user = decoded;
+```
+
+Isso está perfeito e protege as rotas `/agentes` e `/casos` conforme esperado.
+
+---
+
+### 8. Token JWT e Variável de Ambiente: ⚠️
+
+Um ponto crítico que pode causar falhas silenciosas é a configuração da variável `JWT_SECRET`.
+
+No seu `.env`, você deve ter:
+
+```
+JWT_SECRET="segredo aqui"
+```
+
+E no seu código, você usa `process.env.JWT_SECRET`.
+
+**Se essa variável não estiver definida ou estiver incorreta, a geração e validação do token JWT vão falhar, resultando em erros 401 ou 500.**
+
+Certifique-se de que o arquivo `.env` está na raiz do projeto e que está carregado corretamente (você está usando `require('dotenv').config()` no `server.js` e no middleware, o que é correto).
+
+---
+
+### 9. Migration da Tabela `usuarios`: ✅
+
+Sua migration para criar a tabela `usuarios` está correta:
+
+```js
+exports.up = function (knex) {
+  return knex.schema.createTable("usuarios", (table) => {
+    table.increments("id").primary();
+    table.string("nome").notNullable();
+    table.string("email").notNullable().unique();
+    table.string("senha").notNullable();
+  });
+};
+```
+
+Ela cria os campos necessários e garante unicidade no email.
+
+---
+
+### 10. Resumo dos Principais Ajustes para Corrigir os Erros 400 no Registro de Usuário
+
+O problema central está na **validação dos campos no registro**, especialmente:
+
+- Tratar campos `null` e `undefined` explicitamente, não só strings vazias.
+- Garantir que a senha seja sempre uma string válida antes de aplicar regex.
+- Confirmar que o `.env` está configurado com `JWT_SECRET` para que o login funcione corretamente.
+
+---
+
+## Exemplos de Código para Melhorar a Validação no Registro
+
+```js
+async function register(req, res) {
+  try {
+    const { nome, email, senha } = req.body;
+
+    if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
+      return res.status(400).json({ error: "O campo 'nome' é obrigatório e não pode estar vazio ou nulo." });
+    }
+
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      return res.status(400).json({ error: "O campo 'email' é obrigatório e não pode estar vazio ou nulo." });
+    }
+
+    if (!senha || typeof senha !== 'string' || senha.trim().length === 0) {
+      return res.status(400).json({ error: "O campo 'senha' é obrigatório e não pode estar vazio ou nulo." });
+    }
+
+    const receivedFields = Object.keys(req.body);
+    const allowedFields = ["nome", "email", "senha"];
+
+    const hasExtraFields = receivedFields.some(field => !allowedFields.includes(field));
+    if (hasExtraFields) {
+      return res.status(400).json({ error: "Campos extras não são permitidos." });
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+    if (!passwordRegex.test(senha)) {
+      return res.status(400).json({
+        error: "Senha fraca: deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais."
+      });
+    }
+
+    // Verifica email já usado
+    const existingUser = await usuariosRepository.findByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ error: "Email já está em uso" });
+    }
+
+    // Hash da senha
+    const hashedPassword = await bcrypt.hash(senha, 10);
+
+    const [newUser] = await usuariosRepository.createUser({
+      nome,
+      email,
+      senha: hashedPassword,
+    });
+
+    res.status(201).json({ id: newUser.id, nome: newUser.nome, email: newUser.email });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao registrar usuário" });
+  }
 }
 ```
 
 ---
 
-### 6. Middleware de Autenticação (authMiddleware.js)
+## Recursos para você se aprofundar e melhorar ainda mais:
 
-O middleware está correto e protege as rotas de agentes e casos. Só fique atento para garantir que a variável de ambiente `JWT_SECRET` esteja definida e não vazia.
+- **Autenticação e segurança com JWT e bcrypt:**  
+  [Esse vídeo, feito pelos meus criadores, fala muito bem sobre autenticação e segurança em APIs Node.js](https://www.youtube.com/watch?v=Q4LQOfYwujk)
 
----
+- **JWT na prática:**  
+  [Entenda como criar e validar tokens JWT na sua API](https://www.youtube.com/watch?v=keS0JWOypIU)
 
-### 7. Migrations e Seeds
+- **Validação e boas práticas para senhas seguras:**  
+  [Como validar senhas fortes em JavaScript com regex](https://www.youtube.com/watch?v=L04Ln97AwoY)
 
-Sua migration para a tabela `usuarios` está correta, usando `increments` para o ID e campos obrigatórios.
+- **Arquitetura MVC para Node.js:**  
+  [Organize seu projeto com Controllers, Repositories e Middlewares](https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s)
 
-No entanto, não encontrei no seu código a seed para popular a tabela `usuarios`. Embora não seja obrigatório, criar uma seed para usuários pode ajudar no desenvolvimento e testes.
-
----
-
-### 8. Mensagens de Erro e Status Codes
-
-Você está usando mensagens claras e status codes apropriados na maior parte do código, o que é excelente. Continue assim!
-
----
-
-## 💡 Dicas Finais e Recomendações
-
-- **Nunca envie seu arquivo `.env` para repositórios públicos!** Isso é uma falha grave de segurança e pode comprometer seu projeto. Use `.env.example` para compartilhar um template sem valores sensíveis.
-
-- Confira se o seu arquivo `INSTRUCTIONS.md` está atualizado e inclui instruções claras sobre o uso do JWT, registro, login e logout.
-
-- Para aprofundar seu conhecimento em JWT e bcrypt, veja este vídeo:  
-👉 [JWT na prática](https://www.youtube.com/watch?v=keS0JWOypIU)  
-👉 [Uso de JWT e BCrypt](https://www.youtube.com/watch?v=L04Ln97AwoY)
-
-- Para organização e arquitetura do projeto, este vídeo vai te ajudar a entender o padrão MVC em Node.js:  
-👉 [Arquitetura MVC para Node.js](https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s)
+- **Configuração do banco com Docker e Knex:**  
+  [Como configurar PostgreSQL com Docker e conectar usando Knex](https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s)
 
 ---
 
-## 📝 Resumo dos Principais Pontos para Você Focar
+## Resumo rápido dos principais pontos para focar:
 
-- [ ] **Adicionar o arquivo `docker-compose.yml`** para subir o container PostgreSQL e garantir ambiente consistente.  
-- [ ] **Aprimorar validação dos campos `nome`, `email` e `senha` na rota de registro**, tratando valores vazios, nulos e tipos incorretos individualmente.  
-- [ ] **Garantir que a senha seja validada somente após confirmar que o campo está presente e é uma string não vazia.**  
-- [ ] **Validar o ID recebido para exclusão de usuários, garantindo que seja um número válido.**  
-- [ ] **Não enviar o arquivo `.env` para o repositório público.**  
-- [ ] **Adicionar seed para a tabela `usuarios` (opcional, mas recomendado).**  
-- [ ] **Verificar se o `INSTRUCTIONS.md` está completo e atualizado, incluindo exemplos de uso da autenticação.**
+- [ ] Ajustar validação no registro para tratar **campos nulos, undefined e vazios** corretamente.  
+- [ ] Garantir que a senha seja sempre uma string válida antes de aplicar a regex de força da senha.  
+- [ ] Verificar se o `.env` possui a variável `JWT_SECRET` corretamente configurada.  
+- [ ] Manter a estrutura de diretórios exatamente como especificada para evitar penalidades e facilitar manutenção.  
+- [ ] Continuar usando middleware para proteger rotas e validar tokens JWT.  
+- [ ] Revisar mensagens de erro para garantir que são claras e específicas para cada caso de falha.  
 
 ---
 
-Lucas, você está no caminho certo! Com esses ajustes, sua API vai ficar muito mais robusta, segura e alinhada com as melhores práticas. Continue firme, pois aprender a proteger uma API com autenticação e autorização é uma habilidade muito valiosa no mercado! 💪🚀
+santoslucas, você está no caminho certo, e com esses ajustes seu projeto vai ficar muito sólido e profissional! 💥  
+Não desanime com as dificuldades, elas fazem parte do aprendizado. Continue praticando, revisando e testando seu código! Estou aqui torcendo pelo seu sucesso! 🚀✨
 
-Se precisar de ajuda para entender algum ponto específico, estou aqui para te ajudar! 😉
+Se precisar de ajuda para implementar algum desses pontos, é só chamar! 😉
 
-Abraços e bons códigos! 👨‍💻✨
+Abraços do seu Code Buddy 🤖💙
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
