@@ -6,24 +6,19 @@ async function register(req, res) {
   try {
     const { nome, email, senha } = req.body;
 
-    // Validações básicas
-    if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
-      return res.status(400).json({ error: "O campo 'nome' é obrigatório e não pode estar vazio ou nulo." });
+    const requiredFields = ["nome", "email", "senha"];
+    for (const field of requiredFields) {
+      if (!req.body.hasOwnProperty(field)) {
+        return res.status(400).json({ error: `O campo '${field}' é obrigatório.` });
+      }
+      if (typeof req.body[field] !== 'string' || req.body[field].trim() === '') {
+        return res.status(400).json({ error: `O campo '${field}' não pode estar vazio.` });
+      }
     }
 
-    if (!email || typeof email !== 'string' || email.trim().length === 0) {
-      return res.status(400).json({ error: "O campo 'email' é obrigatório e não pode estar vazio ou nulo." });
-    }
-
-    if (!senha || typeof senha !== 'string' || senha.trim().length === 0) {
-      return res.status(400).json({ error: "O campo 'senha' é obrigatório e não pode estar vazio ou nulo." });
-    }
-
-    const receivedFields = Object.keys(req.body);
     const allowedFields = ["nome", "email", "senha"];
-
-    const hasExtraFields = receivedFields.some(field => !allowedFields.includes(field));
-    if (hasExtraFields) {
+    const extraFields = Object.keys(req.body).filter(f => !allowedFields.includes(f));
+    if (extraFields.length > 0) {
       return res.status(400).json({ error: "Campos extras não são permitidos." });
     }
 
@@ -52,7 +47,7 @@ async function register(req, res) {
 
     res.status(201).json({ id: newUser.id, nome: newUser.nome, email: newUser.email });
   } catch (error) {
-    res.status(500).json({ error: "Erro ao registrar usuário" });
+    res.status(500).json({ error: error.message || "Erro ao registrar usuário" });
   }
 }
 
@@ -85,11 +80,16 @@ async function logout(req, res) {
 }
 
 async function deleteUser(req, res) {
+  const { id } = req.params;
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    return res.status(400).json({ error: "ID inválido" });
+  }
+
   try {
-    const deleted = await usuariosRepository.deleteUser(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
+    const deleted = await usuariosRepository.deleteUser(id);
+    if (!deleted) return res.status(404).json({ error: "Usuário não encontrado" });
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: "Erro ao deletar usuário" });
