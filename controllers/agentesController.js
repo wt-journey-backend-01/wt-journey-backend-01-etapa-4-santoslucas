@@ -34,7 +34,7 @@ async function getAgenteById(req, res) {
     try {
         const { id } = req.params;
         if (!UUID_REGEX.test(id)) {
-            return res.status(400).json({ message: 'Formato de ID inválido.' });
+            return res.status(400).json({ error: 'ID inválido' });
         }
         const agente = await agentesRepository.findById(id);
         if (!agente) {
@@ -146,7 +146,7 @@ async function deleteAgente(req, res) {
         if (!removed) {
             return res.status(500).json({ message: 'Falha ao remover agente.' });
         }
-        res.status(204).send();
+        res.status(204).end();
     } catch (error) {
         res.status(500).json({ message: "Erro interno ao deletar agente." });
     }
