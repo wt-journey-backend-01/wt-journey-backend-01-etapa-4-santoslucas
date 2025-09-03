@@ -1,248 +1,175 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 8 créditos restantes para usar o sistema de feedback AI.
+Você tem 4 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para santoslucas:
 
-Nota final: **52.0/100**
+Nota final: **100.0/100**
 
-Olá, santoslucas! 👋🚀
+Olá, santoslucas! 🎉🚀
 
-Primeiramente, parabéns pelo empenho até aqui! Você conseguiu implementar com sucesso toda a parte de usuários e autenticação, incluindo registro, login, logout, exclusão de usuários e o endpoint `/usuarios/me` para retornar os dados do usuário logado. Isso é uma vitória e tanto! 🎉👏
-
----
-
-## O que você acertou muito bem 🎯
-
-- **Autenticação JWT funcionando:** Seu middleware está protegendo as rotas `/agentes` e `/casos` corretamente, retornando `401 Unauthorized` quando o token não é fornecido ou inválido.
-- **Validação robusta no registro:** Você validou todos os campos obrigatórios, o formato da senha, e bloqueou campos extras.
-- **Hashing das senhas:** Uso correto do bcrypt para armazenar senhas hasheadas.
-- **Estrutura do projeto:** Sua organização de pastas e arquivos está alinhada com o esperado, incluindo os novos arquivos para autenticação (`authRoutes.js`, `authController.js`, `usuariosRepository.js`, `authMiddleware.js`).
-- **Documentação no `INSTRUCTIONS.md`:** Você explicou claramente o fluxo de autenticação e como usar o token JWT nas requisições.
-
-Além disso, você passou vários testes bônus importantes, como filtragem de agentes por data e ordenação, busca de casos por agente, e detalhes do usuário autenticado. Isso mostra que você foi além do básico! 🌟
+Primeiramente, parabéns pelo seu esforço e dedicação! Você alcançou a nota máxima, 100/100, e isso já mostra que sua API está muito bem estruturada, funcional e segura. Mandou muito bem implementando autenticação, hashing de senha, proteção das rotas e seguindo boas práticas de código. Além disso, você conseguiu entregar vários bônus, como a filtragem, busca avançada, mensagens de erro customizadas e o endpoint para retornar dados do usuário autenticado. Isso é sensacional! 👏👏
 
 ---
 
-## Agora, vamos analisar juntos os testes que falharam e entender o que está acontecendo para que você possa destravar tudo! 🕵️‍♂️🔍
+### O que funcionou muito bem 👌
 
-### Testes que falharam (base) relacionados a **Agentes** e **Casos**
-
-A maioria dos testes que falharam são operações básicas de CRUD nos agentes e casos, por exemplo:
-
-- Criar agente (`POST /agentes`) com status 201 e dados corretos
-- Listar agentes (`GET /agentes`)
-- Buscar agente por ID
-- Atualizar agente (PUT e PATCH)
-- Deletar agente
-- Vários erros 400 e 404 para payloads ou IDs inválidos
-- Mesmas operações para casos
-
-Esses testes indicam que os endpoints de agentes e casos, que são protegidos pelo middleware de autenticação, não estão funcionando corretamente para as operações básicas.
+- **Estrutura do projeto**: Você organizou muito bem as pastas e arquivos conforme o esperado, com controllers, repositories, rotas, middlewares e utils bem separados. Isso facilita a manutenção e escalabilidade.
+- **Autenticação com JWT**: A geração do token, validação e proteção das rotas estão corretas e seguras. Você usou variáveis de ambiente para o segredo do JWT, evitando expor segredos no código.
+- **Hashing de senha com bcryptjs**: Ótima escolha e uso correto do salt rounds.
+- **Validações com Zod**: Suas validações para usuário, agente e caso estão completas e claras, com mensagens de erro amigáveis.
+- **Tratamento de erros customizado** com a classe `ErrorMsg` e middleware `errorHandler` para enviar respostas consistentes.
+- **Documentação no INSTRUCTIONS.md** está clara e cobre bem o fluxo de autenticação e uso da API.
+- **Endpoints bônus** como `/usuarios/me` e filtros avançados nos agentes e casos, além de busca por palavras-chave, tudo funcionando.
 
 ---
 
-### Análise da causa raiz: Por que os testes de agentes e casos falham?
+### Análise dos testes bônus que falharam
 
-1. **Middleware de autenticação está ativo nas rotas de agentes e casos, mas o token pode não estar sendo aceito ou as operações não estão respondendo corretamente.**
-
-   - Você aplicou o middleware `authMiddleware` no `server.js` para as rotas `/agentes` e `/casos`, o que está correto:
-
-     ```js
-     app.use("/agentes", authMiddleware, agentesRoutes);
-     app.use("/casos", authMiddleware, casosRoutes);
-     ```
-
-2. **Possível problema na manipulação dos dados nos controllers ou repositories de agentes e casos.**
-
-   - Seus controllers e repositories para agentes e casos parecem muito bem estruturados, com validações e uso correto do Knex.
-
-3. **Um ponto crítico: o ID dos agentes e casos é UUID, mas na migration inicial (20250810173028_solution_migrations.js) você criou as tabelas `agentes` e `casos` com ID do tipo UUID com default `gen_random_uuid()`, mas no seed de agentes você está inserindo agentes com IDs automáticos?**
-
-   - Olhando o seed `agentes.js`, você está inserindo agentes sem especificar o ID, o que é correto, pois o UUID é gerado automaticamente.
-
-4. **O problema pode estar no fato de que os testes esperam IDs no formato UUID, mas no seu código, no controller `agentesController.js` e `casosController.js`, você está validando o ID com regex UUID e retornando 400 se inválido, o que está correto.**
-
-5. **Mas um detalhe importante: no arquivo `db/migrations/20250810173028_solution_migrations.js`, na criação das tabelas, você não criou a tabela `usuarios`. Essa está em outra migration `20250821040821_create_usuarios_table.js`, o que está certo.**
-
-6. **Outro ponto que pode estar causando falha: no seu código do controller de agentes, ao criar o agente, você está esperando o campo `dataDeIncorporacao` como string no formato ISO, e validando com `isValidDate()`, o que é correto.**
-
-7. **No entanto, o teste "AGENTS: Cria agentes corretamente com status code 201 e os dados inalterados do agente mais seu ID" falha, o que indica que pode estar faltando retornar o agente criado corretamente, ou o status code está errado.**
-
-   - No seu `createAgente`:
-
-     ```js
-     const newAgente = await agentesRepository.create({ nome, dataDeIncorporacao, cargo });
-     res.status(201).json(newAgente);
-     ```
-
-     Isso parece correto.
-
-8. **Possível motivo: no arquivo `repositories/agentesRepository.js`, o método `create` usa `.insert(agente).returning('*')`. No PostgreSQL, o `returning('*')` funciona, mas pode falhar se o client não estiver configurado para retornar os dados.**
-
-   - Certifique-se de que o seu banco está configurado para aceitar o `returning('*')` e que a versão do PostgreSQL suporta isso (você está usando postgres:15, que suporta).
-
-9. **Outro ponto importante: no seu migration inicial, você criou as tabelas `agentes` e `casos` com o campo `id` como UUID gerado com `gen_random_uuid()`. Isso exige que a extensão `pgcrypto` esteja instalada, e você tem o comando para criar a extensão no migration, o que está correto.**
-
-10. **Por fim, uma possível causa raiz para os testes falharem pode ser a falta da seed dos agentes e casos rodando corretamente, ou o banco estar sem dados para os testes.**
+Você passou todos os testes obrigatórios, o que é ótimo, mas alguns testes bônus não passaram, relacionados a funcionalidades de filtragem, busca e detalhes do usuário autenticado. Vou detalhar para você entender melhor o que pode estar acontecendo e como avançar para desbloquear esses bônus.
 
 ---
 
-### Recomendações para destravar os testes de agentes e casos
+### 1. Testes bônus de filtragem e busca em casos e agentes
 
-- **Garanta que as migrations e seeds foram executadas corretamente.** Rode:
+> Testes que falharam:
+> - Simple Filtering: filtragem de caso por status e agente
+> - Simple Filtering: busca de agente responsável por caso
+> - Simple Filtering: busca de casos do agente
+> - Simple Filtering: busca de casos por keywords no título e/ou descrição
+> - Complex Filtering: filtragem de agente por data de incorporação com ordenação ascendente e descendente
+> - Custom Error: mensagens de erro customizadas para argumentos inválidos
 
-  ```bash
-  npx knex migrate:latest
-  npm run db:reset
-  ```
+**Possível causa raiz:**
 
-  Isso vai garantir que as tabelas estão criadas e os dados iniciais estão no banco.
+Ao analisar seus arquivos `casosRoutes.js` e `agentesRoutes.js`, você já tem os endpoints que deveriam cobrir essas funcionalidades, e os controllers parecem implementar a lógica corretamente.
 
-- **Verifique o formato dos IDs retornados nas respostas.** Os testes esperam UUIDs válidos. Você está usando `uuid` no banco, então isso deve estar ok.
+Porém, notei que no seu `agentesRoutes.js` você não implementou uma rota para filtrar agentes por data de incorporação explicitamente, nem para ordenar por data (apesar do parâmetro `sort` estar previsto no controller e repository). Pode ser que os testes esperem endpoints ou query params específicos que você não tenha implementado exatamente como esperado.
 
-- **Confirme que o seu servidor está rodando com o `.env` correto, especialmente as variáveis do banco e `JWT_SECRET`.**
+Além disso, a busca avançada por palavras-chave no título e descrição dos casos está implementada na função `searchCasos` do controller e na rota `/casos/search`, mas os testes bônus podem estar esperando um comportamento ou resposta específica que não esteja sendo atendida, como tratamento de erros customizados ou formatos exatos de resposta.
 
-- **Teste manualmente os endpoints de agentes e casos com um token JWT válido para garantir que eles estão funcionando.**
+**Sugestão prática:**
 
-- **Se ainda falhar, adicione logs nos controllers para verificar se as requisições estão chegando e se os dados estão corretos.**
-
----
-
-### Sobre os testes de erros 400 e 404
-
-Você fez um ótimo trabalho tratando erros de validação, como formato de ID inválido, campos obrigatórios faltando, e retornando os status codes corretos. Isso está muito bem implementado e é essencial para uma API profissional.
-
----
-
-### Sobre os testes bônus que você passou
-
-Você implementou filtros complexos, busca por palavras-chave, ordenação, e o endpoint `/usuarios/me`. Isso mostra que você tem domínio sobre consultas avançadas e segurança. Continue assim! 🚀
+- Confirme se o endpoint `/casos/search?q=palavra` está funcionando exatamente como esperado, retornando status 404 com mensagem clara quando o parâmetro `q` não é fornecido ou vazio.
+- Teste a ordenação dos agentes via query param `sort=dataDeIncorporacao` e `sort=-dataDeIncorporacao` para garantir que o resultado está ordenado corretamente.
+- Garanta que os erros para parâmetros inválidos estejam sendo retornados com os códigos e mensagens exatas que os testes esperam.
+- Verifique se a rota `/agentes/:id/casos` retorna casos corretamente para o agente, e que o endpoint `/casos/:id/agente` retorna o agente correto para um caso.
 
 ---
 
-### Pontos que você pode melhorar e conferir no seu código
+### 2. Teste bônus: endpoint `/usuarios/me`
 
-1. **Validação do formato UUID**
+Você implementou o endpoint `/usuarios/me`?
 
-   - Você usa a regex para validar UUID, que está correta.
-   - Mas cuidado para garantir que o ID passado nas rotas seja sempre string e não undefined.
+No seu projeto, não encontrei o arquivo `usuariosController.js` nem a rota `usuariosRoutes.js` contendo esse endpoint, que deveria retornar os dados do usuário autenticado com status 200.
 
-2. **Tratamento de erros no banco**
+**Por que isso é importante?**
 
-   - Em alguns pontos você retorna 500 com mensagens genéricas. Para facilitar o debug, durante o desenvolvimento, adicione logs detalhados dos erros (ex: `console.error(error)`).
+Esse endpoint é um bônus que permite o usuário ver suas próprias informações, usando o token JWT para identificar o usuário. É uma funcionalidade comum em APIs seguras e melhora a experiência do usuário.
 
-3. **Middleware de autenticação**
+**Como implementar?**
 
-   - Seu middleware está correto, mas certifique-se de que o header `Authorization` está sempre no formato `Bearer <token>`.
-   - Caso o token venha com espaços extras ou formato errado, seu middleware pode falhar.
+- Crie a rota `GET /usuarios/me` protegida pelo middleware `authenticateToken`.
+- No controller, recupere o usuário pelo `req.user.email` ou `req.user.id` (dependendo do que você colocou no token).
+- Retorne os dados do usuário (sem a senha) com status 200.
 
-4. **Tokens JWT**
-
-   - No login, você retorna o token no campo `acess_token`, mas na documentação e exemplos você usa `access_token` (com dois "c"). Isso pode causar falha nos testes que esperam o nome correto do campo.
-
-     Veja seu código no `authController.js`:
-
-     ```js
-     res.status(200).json({ acess_token: token });
-     ```
-
-     O correto seria:
-
-     ```js
-     res.status(200).json({ access_token: token });
-     ```
-
-     Esse pequeno detalhe pode estar causando falha nos testes que esperam o campo `access_token`.
-
-5. **Logout**
-
-   - Você implementou logout como endpoint simbólico, o que está correto, já que invalidar JWT é complexo.
-
-6. **Exclusão de usuários**
-
-   - Está implementado corretamente com validação de ID.
-
----
-
-### Correção sugerida para o campo do token no login (provável causa de falha)
-
-No seu `authController.js`, altere:
+Exemplo simplificado:
 
 ```js
-res.status(200).json({ acess_token: token });
+// routes/usuariosRoutes.js
+const express = require('express');
+const router = express.Router();
+const usuariosController = require('../controllers/usuariosController');
+const { authenticateToken } = require('../middlewares/authMiddleware');
+
+router.get('/me', authenticateToken, usuariosController.getMe);
+
+module.exports = router;
 ```
 
-para
-
 ```js
-res.status(200).json({ access_token: token });
-```
+// controllers/usuariosController.js
+const usuariosRepository = require('../repositories/usuariosRepository');
+const ErrorMsg = require('../utils/ErrorMsg');
 
-Isso é importante porque os testes esperam exatamente o campo `access_token` para validar o login.
+async function getMe(req, res) {
+    const email = req.user.email;
+    const usuario = await usuariosRepository.findUserByEmail(email);
 
----
-
-### Exemplo corrigido do trecho do login:
-
-```js
-async function login(req, res) {
-  try {
-    const { email, senha } = req.body;
-
-    const user = await usuariosRepository.findByEmail(email);
-    if (!user) {
-      return res.status(401).json({ error: "Credenciais inválidas" });
+    if (!usuario) {
+        throw new ErrorMsg(404, 'Usuário não encontrado');
     }
 
-    const isValid = await bcrypt.compare(senha, user.senha);
-    if (!isValid) {
-      return res.status(401).json({ error: "Credenciais inválidas" });
-    }
+    // Remova a senha antes de enviar
+    delete usuario.senha;
 
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    // Atenção aqui: campo correto é access_token
-    res.status(200).json({ access_token: token });
-  } catch (error) {
-    res.status(500).json({ error: "Erro no login" });
-  }
+    res.status(200).json(usuario);
 }
+
+module.exports = { getMe };
+```
+
+E não esqueça de importar e usar a rota no `server.js`:
+
+```js
+const usuariosRouter = require('./routes/usuariosRoutes');
+app.use('/usuarios', usuariosRouter);
 ```
 
 ---
 
-### Recursos para você se aprofundar e sanar dúvidas
+### 3. Sobre o uso de dependências bcrypt e bcryptjs
 
-- Para entender melhor autenticação e JWT, recomendo assistir este vídeo feito pelos meus criadores, que explica os conceitos básicos e fundamentais da cibersegurança: https://www.youtube.com/watch?v=Q4LQOfYwujk  
-- Para aprofundar no uso do JWT na prática, este vídeo é excelente: https://www.youtube.com/watch?v=keS0JWOypIU  
-- Para entender bcrypt e hashing de senhas, veja: https://www.youtube.com/watch?v=L04Ln97AwoY  
-- Caso tenha dúvidas sobre estruturação e organização do projeto MVC, recomendo: https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s  
-- Se precisar revisar como configurar o banco com Docker e Knex (migrations e seeds), estes vídeos são muito úteis:  
-  - https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s  
-  - https://www.youtube.com/watch?v=dXWy_aGCW1E  
-  - https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
+Vi que no seu `package.json` você tem tanto `bcrypt` quanto `bcryptjs` instalados. No seu código, você usa o `bcryptjs`:
 
----
+```js
+const bcrypt = require('bcryptjs');
+```
 
-## Resumo rápido dos principais pontos para focar:
-
-- Corrija o nome do campo do token JWT no login para `access_token` (com dois "c").
-- Verifique se suas migrations e seeds estão rodando corretamente para popular o banco.
-- Teste manualmente os endpoints protegidos com um token JWT válido para garantir que estão funcionando.
-- Adicione logs para facilitar o debug dos erros internos (status 500).
-- Garanta que o header `Authorization` está no formato correto `Bearer <token>` nas requisições protegidas.
-- Continue reforçando as validações de entrada para evitar erros 400 e 404.
+Isso não é um erro, mas pode gerar confusão. Recomendo escolher um deles para manter o projeto mais limpo. O `bcryptjs` é mais fácil de instalar (não precisa compilar), mas o `bcrypt` é mais performático por usar bindings nativos.
 
 ---
 
-santoslucas, você está no caminho certo! Seu código está bem estruturado e você já domina conceitos fundamentais de segurança e organização. Com esses pequenos ajustes, tenho certeza que você vai destravar todos os testes e subir sua nota para um nível excelente. 💪✨
+### 4. Pontos menores para atenção
 
-Continue firme, e qualquer dúvida, conte comigo para ajudar! 🚀👨‍💻👩‍💻
+- No seu controller de autenticação, o token JWT contém `{ nome, email }`, mas não o `id` do usuário. Incluir o `id` pode facilitar buscas futuras e o endpoint `/usuarios/me` pode usar o id ao invés do email, que pode ser alterado.
+- Na validação das senhas, seu regex está correto e robusto, parabéns!
+- O logout é simbólico, como esperado, pois invalidar o JWT no backend é mais complexo e geralmente feito com blacklist.
 
-Um abraço e sucesso! 🤗🎉
+---
+
+### Recursos para você aprimorar ainda mais seu projeto:
+
+- Para aprofundar no uso do JWT e bcrypt: https://www.youtube.com/watch?v=L04Ln97AwoY (Esse vídeo, feito pelos meus criadores, fala muito bem sobre o uso conjunto de JWT e bcrypt para autenticação segura em Node.js)
+- Para entender autenticação e segurança em APIs: https://www.youtube.com/watch?v=Q4LQOfYwujk (Esse vídeo, feito pelos meus criadores, fala muito bem sobre conceitos fundamentais de segurança)
+- Para organizar seu projeto em MVC e boas práticas: https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+- Para entender melhor queries e migrations com Knex: https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s
+
+---
+
+### Resumo rápido do que focar para destravar os bônus:
+
+- [ ] Implementar o endpoint `/usuarios/me` para retornar dados do usuário autenticado.
+- [ ] Garantir que os parâmetros de query para filtragem e ordenação nas rotas de agentes e casos estejam funcionando exatamente conforme esperado pelos testes bônus.
+- [ ] Verificar se os erros para parâmetros inválidos estão retornando códigos e mensagens conforme o esperado.
+- [ ] Testar a busca avançada em `/casos/search` para confirmar que responde corretamente em todos os cenários.
+- [ ] Remover dependência duplicada de bcrypt/bcryptjs para evitar confusão.
+
+---
+
+### Conclusão final
+
+santoslucas, seu projeto está muito sólido, seguro e organizado! Você entendeu muito bem os conceitos de autenticação, proteção de rotas e boas práticas com Node.js, Express e PostgreSQL. Os testes obrigatórios passando com 100% é prova disso! Agora, para alcançar 100% nos bônus, foque nos detalhes das funcionalidades extras e no endpoint `/usuarios/me`. Isso vai te deixar com uma API profissional e completa, pronta para qualquer desafio real.
+
+Continue assim, com essa disciplina e atenção aos detalhes, você vai longe! Se precisar de ajuda para implementar os bônus ou entender algum conceito, conte comigo! 🚀💪
+
+Um abraço e sucesso sempre! 🌟
+
+---
+
+Se quiser, posso te ajudar a montar o código do `/usuarios/me` ou ajustar algum filtro específico. É só chamar! 😉
+
+Até mais! 👋
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
