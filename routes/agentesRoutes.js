@@ -1,213 +1,108 @@
 const express = require('express');
+const { z } = require('zod');
 const router = express.Router();
 const agentesController = require('../controllers/agentesController');
+const { authenticateToken } = require('../middlewares/authMiddleware');
+const ErrorMsg = require('../utils/ErrorMsg');
 
-/**
- * @swagger
- * tags:
- *   - name: Agentes
- *     description: API para gerenciamento de agentes
- */
+const baseAgente = z.object({
+    nome: z
+        .string({
+            error: (issue) =>
+                issue.input === undefined
+                    ? 'O campo nome é obrigatório'
+                    : 'O campo nome deve ser uma string',
+        })
+        .min(1, 'O campo nome é obrigatório'),
+    dataDeIncorporacao: z
+        .string('O campo dataDeIncorporacao é obrigatório')
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'O campo dataDeIncorporacao deve estar no formato YYYY-MM-DD')
+        .refine(
+            (date) => {
+                const parsed = new Date(date);
+                return !isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+            },
+            { error: 'O campo dataDeIncorporacao deve ser uma data válida' }
+        )
+        .refine(
+            (dataValida) => {
+                const today = new Date();
+                const date = new Date(dataValida);
+                return date <= today;
+            },
+            { error: 'A data de incorporação não pode ser futura' }
+        ),
+    cargo: z
+        .string({
+            error: (issue) =>
+                issue.input === undefined
+                    ? 'O campo cargo é obrigatório'
+                    : 'O campo cargo deve ser uma string',
+        })
+        .min(1, 'O campo cargo é obrigatório'),
+});
 
-/**
- * @swagger
-/**
- * @swagger
- * /agentes:
- *   get:
- *     summary: Retorna a lista de todos os agentes
- *     tags: [Agentes]
- *     parameters:
- *       - in: query
- *         name: cargo
- *         schema:
- *           type: string
- *         description: Filtra agentes pelo cargo.
- *       - in: query
- *         name: dataDeIncorporacaoInicio
- *         schema:
- *           type: string
- *           format: date
- *           example: "2000-01-01"
- *         description: Filtra agentes com data de incorporação a partir desta data (formato YYYY-MM-DD).
- *       - in: query
- *         name: dataDeIncorporacaoFim
- *         schema:
- *           type: string
- *           format: date
- *           example: "2015-12-31"
- *         description: Filtra agentes com data de incorporação até esta data (formato YYYY-MM-DD).
- *       - in: query
- *         name: sort
- *         schema:
- *           type: string
- *           example: "-dataDeIncorporacao"
- *         description: >
- *           Ordena os resultados. Use o nome do campo para ordem ascendente e "-nomeDoCampo" para descendente
- *           (ex: dataDeIncorporacao ou -dataDeIncorporacao).
- *     responses:
- *       200:
- *         description: A lista de agentes.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Agente'
- *       400:
- *         description: Parâmetro de filtro inválido.
- */
-router.get('/', agentesController.getAllAgentes);
 
-/**
- * @swagger
- * /agentes/{id}:
- *   get:
- *     summary: Retorna um agente específico pelo ID
- *     tags: [Agentes]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: O ID do agente.
- *     responses:
- *       200:
- *         description: Os dados do agente.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Agente'
- *       404:
- *         description: Agente não encontrado.
- */
-router.get('/:id', agentesController.getAgenteById);
+const postAgente = baseAgente.strict();
+const putAgente = baseAgente.strict();
+const patchAgente = baseAgente.strict().partial();
 
-/**
- * @swagger
- * /agentes:
- *   post:
- *     summary: Cria um novo agente
- *     tags: [Agentes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nome:
- *                 type: string
- *               dataDeIncorporacao:
- *                 type: string
- *                 format: date
- *               cargo:
- *                 type: string
- *     responses:
- *       201:
- *         description: O agente foi criado com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Agente'
- *       400:
- *         description: Dados inválidos.
- */
-router.post('/', agentesController.createAgente);
+router.get('/:id/casos', authenticateToken, checkID, agentesController.getCasosByAgente);
+router.get('/', authenticateToken, agentesController.getAllAgentes);
+router.get('/:id', authenticateToken, checkID, agentesController.getAgenteById);
+router.post('/', authenticateToken, checkParams(postAgente), agentesController.postAgente);
+router.put(
+    '/:id',
+    authenticateToken,
+    checkID,
+    checkParams(putAgente),
+    agentesController.putAgente
+);
+router.patch(
+    '/:id',
+    authenticateToken,
+    checkID,
+    checkParams(patchAgente),
+    agentesController.patchAgente
+);
+router.delete('/:id', authenticateToken, checkID, agentesController.deleteAgente);
 
-/**
- * @swagger
- * /agentes/{id}:
- *   put:
- *     summary: Atualiza um agente existente por completo (todos os campos são necessários)
- *     tags: [Agentes]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: O ID do agente.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Agente'
- *     responses:
- *       200:
- *         description: O agente foi atualizado com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Agente'
- *       400:
- *         description: Dados inválidos.
- *       404:
- *         description: Agente não encontrado.
- */
-router.put('/:id', agentesController.updateAgenteCompleto);
-/**
- * @swagger
- * /agentes/{id}:
- *   patch:
- *     summary: Atualiza um agente existente parcialmente
- *     tags: [Agentes]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: O ID do agente.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nome:
- *                 type: string
- *               dataDeIncorporacao:
- *                 type: string
- *                 format: date
- *               cargo:
- *                 type: string
- *     responses:
- *       200:
- *         description: O agente foi atualizado com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Agente'
- *       400:
- *         description: Dados inválidos.
- *       404:
- *         description: Agente não encontrado.
- */
-router.patch('/:id', agentesController.updateAgenteParcial);
-/**
- * @swagger
- * /agentes/{id}:
- *   delete:
- *     summary: Remove um agente
- *     tags: [Agentes]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: O ID do agente.
- *     responses:
- *       204:
- *         description: Agente removido com sucesso.
- *       404:
- *         description: Agente não encontrado.
- */
-router.delete('/:id', agentesController.deleteAgente);
-router.get('/:id/casos', agentesController.findCasosByAgente);
+function checkID(req, res, next) {
+    const id = req.params.id;
+    if (!/^\d+$/.test(id)) {
+        return next(
+            new ErrorMsg(404, 'Parâmetros inválidos', {
+                id: 'O parâmetro ID deve ser um número inteiro',
+            })
+        );
+    }
+    next();
+}
+
+function checkParams(schema) {
+    return (req, res, next) => {
+        const data = req.body;
+        const results = schema.safeParse(data);
+
+        if (!results.success) {
+            const issues = results.error.issues;
+            const errors = {};
+
+            for (const issue of issues) {
+                if (issue.path[0] != errors.key) {
+                    const field = issue.path[0];
+                    if (!errors[field]) {
+                        errors[field] = issue.message;
+                    }
+                }
+            }
+
+            return next(new ErrorMsg(400, 'Parâmetros inválidos', errors));
+        }
+
+        req.body = results.data;
+        next();
+    };
+}
 
 module.exports = router;

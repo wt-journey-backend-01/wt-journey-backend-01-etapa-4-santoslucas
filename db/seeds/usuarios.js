@@ -1,17 +1,34 @@
+const bcrypt = require('bcryptjs');
 /**
  * @param { import("knex").Knex } knex
- * @returns { Promise<void> } 
+ * @returns { Promise<void> }
  */
-const bcrypt = require('bcrypt');
-
 exports.seed = async function (knex) {
-  await knex('usuarios').del();
-
-  const senhaHash = await bcrypt.hash('Senha@123', 10);
-
-  await knex('usuarios').insert([
-    { nome: 'Admin', email: 'admin@policia.com', senha: senhaHash },
-    { nome: 'Agente Silva', email: 'silva@policia.com', senha: senhaHash },
-    { nome: 'Delegada Souza', email: 'souza@policia.com', senha: senhaHash }
-  ]);
+    await knex('usuarios').del();
+    await knex('usuarios').insert([
+        {
+            nome: 'Carlos Mendes',
+            email: 'carlosm@gmail.com',
+            senha: await bcrypt.hash(
+                'MinhaSenha@1',
+                await bcrypt.genSalt(parseInt(process.env.SALT_ROUNDS) || 10)
+            ),
+        },
+        {
+            nome: 'Ana Pereira',
+            email: 'anap@gmail.com',
+            senha: await bcrypt.hash(
+                'Segura#2025',
+                await bcrypt.genSalt(parseInt(process.env.SALT_ROUNDS) || 10)
+            ),
+        },
+        {
+            nome: 'Roberto Lima',
+            email: 'robertol@gmail.com',
+            senha: await bcrypt.hash(
+                'Forte!Senha7',
+                await bcrypt.genSalt(parseInt(process.env.SALT_ROUNDS) || 10)
+            ),
+        },
+    ]);
 };

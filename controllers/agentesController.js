@@ -1,183 +1,97 @@
 const agentesRepository = require('../repositories/agentesRepository');
 const casosRepository = require('../repositories/casosRepository');
+const ErrorMsg = require('../utils/ErrorMsg');
 
-const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-
-const isValidDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date instanceof Date && !isNaN(date) && date <= new Date();
-};
-
-async function getAllAgentes(req, res) {
-    try {
-        const { cargo, dataDeIncorporacaoInicio, dataDeIncorporacaoFim, sort } = req.query;
-
-        if (dataDeIncorporacaoInicio && !DATE_REGEX.test(dataDeIncorporacaoInicio)) {
-            return res.status(400).json({ message: 'Formato inválido para dataDeIncorporacaoInicio. Use YYYY-MM-DD.' });
-        }
-        if (dataDeIncorporacaoFim && !DATE_REGEX.test(dataDeIncorporacaoFim)) {
-            return res.status(400).json({ message: 'Formato inválido para dataDeIncorporacaoFim. Use YYYY-MM-DD.' });
-        }
-
-        const filters = { cargo, dataDeIncorporacaoInicio, dataDeIncorporacaoFim, sort };
-
-        const agentes = await agentesRepository.findAll(filters);
-        res.status(200).json(agentes);
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno no servidor." });
-    }
-}
-
-
-async function getAgenteById(req, res) {
-    try {
-        const { id } = req.params;
-        if (!UUID_REGEX.test(id)) {
-            return res.status(400).json({ error: 'ID inválido' });
-        }
-        const agente = await agentesRepository.findById(id);
-        if (!agente) {
-            return res.status(404).json({ message: "Agente não encontrado." });
-        }
-        res.status(200).json(agente);
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno no servidor." });
-    }
-}
-
-
-async function createAgente(req, res) {
-    try {
-        const { nome, dataDeIncorporacao, cargo } = req.body;
-        if (!nome || typeof nome !== 'string' || nome.trim() === '') {
-            return res.status(400).json({ message: 'O campo "nome" é obrigatório.' });
-        }
-        if (!cargo || typeof cargo !== 'string' || cargo.trim() === '') {
-            return res.status(400).json({ message: 'O campo "cargo" é obrigatório.' });
-        }
-        if (!dataDeIncorporacao || !isValidDate(dataDeIncorporacao)) {
-            return res.status(400).json({ message: 'O campo "dataDeIncorporacao" é obrigatório, deve ser uma data válida e não pode ser no futuro.' });
-        }
-        const newAgente = await agentesRepository.create({ nome, dataDeIncorporacao, cargo });
-        res.status(201).json(newAgente);
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno ao criar agente." });
-    }
-}
-
-
-async function updateAgenteCompleto(req, res) {
-    try {
-        const { id } = req.params;
-        const { nome, dataDeIncorporacao, cargo } = req.body;
-
-        if (req.body.id) {
-            return res.status(400).json({ message: "O campo 'id' não pode ser alterado." });
-        }
-        if (!UUID_REGEX.test(id)) {
-            return res.status(400).json({ message: 'Formato de ID inválido.' });
-        }
-        if (nome === undefined || dataDeIncorporacao === undefined || cargo === undefined) {
-            return res.status(400).json({ message: 'Para uma atualização completa, os campos são obrigatórios: nome, dataDeIncorporacao, cargo.' });
-        }
-        if (!isValidDate(dataDeIncorporacao)) {
-            return res.status(400).json({ message: 'O campo "dataDeIncorporacao" deve ser uma data válida e não pode ser no futuro.' });
-        }
-
-        // repository.update will return null if agent doesn't exist
-        const updatedAgente = await agentesRepository.update(id, { nome, dataDeIncorporacao, cargo });
-        if (!updatedAgente) {
-            return res.status(404).json({ message: 'Agente não encontrado.' });
-        }
-        res.status(200).json(updatedAgente);
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno ao atualizar agente." });
-    }
-}
-
-
-
-async function updateAgenteParcial(req, res) {
-    try {
-        const { id } = req.params;
-        const data = req.body;
-
-        if (data.id) {
-            return res.status(400).json({ message: "O campo 'id' não pode ser alterado." });
-        }
-        if (!UUID_REGEX.test(id)) {
-            return res.status(400).json({ message: 'Formato de ID inválido.' });
-        }
-        // Ensure payload is not empty and contains at least one allowed field
-        const allowed = ['nome', 'dataDeIncorporacao', 'cargo'];
-        const keys = Object.keys(data || {}).filter(k => allowed.includes(k));
-        if (keys.length === 0) {
-            return res.status(400).json({ message: 'Envie pelo menos um dos campos: nome, dataDeIncorporacao, cargo.' });
-        }
-        if (data.dataDeIncorporacao && !isValidDate(data.dataDeIncorporacao)) {
-            return res.status(400).json({ message: 'O campo "dataDeIncorporacao" deve ser uma data válida e não pode ser no futuro.' });
-        }
-
-        const updatedAgente = await agentesRepository.update(id, data);
-        if (!updatedAgente) {
-            return res.status(404).json({ message: 'Agente não encontrado.' });
-        }
-        res.status(200).json(updatedAgente);
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno ao atualizar agente." });
-    }
-}
-
-
-
-async function deleteAgente(req, res) {
-    try {
-        const { id } = req.params;
-        if (!UUID_REGEX.test(id)) {
-            return res.status(400).json({ message: 'Formato de ID inválido.' });
-        }
-        // Check existence first
-        const existing = await agentesRepository.findById(id);
-        if (!existing) {
-            return res.status(404).json({ message: 'Agente não encontrado.' });
-        }
-        const removed = await agentesRepository.remove(id);
-        if (!removed) {
-            return res.status(500).json({ message: 'Falha ao remover agente.' });
-        }
-        res.status(204).end();
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno ao deletar agente." });
-    }
-}
-
-
-
-async function findCasosByAgente(req, res) {
-  try {
-    const { id } = req.params;
-    if (!UUID_REGEX.test(id)) {
-        return res.status(400).json({ message: 'Formato de ID inválido.' });
-    }
+async function getAgenteOrThrowErrorMsg(id) {
     const agente = await agentesRepository.findById(id);
     if (!agente) {
-        return res.status(404).json({ message: 'Agente não encontrado.' });
+        throw new ErrorMsg(404, `Não foi possível encontrar o agente de Id: ${id}.`);
     }
-    const casos = await casosRepository.findByAgenteId(id);
-    res.status(200).json(casos);
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno no servidor." });
-  }
+    return agente;
 }
 
+async function getAllAgentes(req, res) {
+    const cargo = req.query.cargo;
+    const sort = req.query.sort;
+    if (sort && !['dataDeIncorporacao', '-dataDeIncorporacao'].includes(sort)) {
+        throw new ErrorMsg(400, 'Parâmetros inválidos', {
+            sort: "O parâmetro 'sort' deve ser 'dataDeIncorporacao' ou '-dataDeIncorporacao'.",
+        });
+    }
+    const filters = {};
+    if (cargo) filters.cargo = cargo;
+    if (sort) filters.sort = sort;
+    const agentes = await agentesRepository.findAll(filters);
+
+    if (cargo) {
+        if (agentes.length === 0) {
+            throw new ErrorMsg(404, `Não foi possível encontrar agentes com o cargo: ${cargo}.`);
+        }
+    }
+    res.status(200).json(agentes);
+}
+
+async function getAgenteById(req, res) {
+    const id = req.params.id;
+    const agente = await getAgenteOrThrowErrorMsg(id);
+    res.status(200).json(agente);
+}
+
+async function getCasosByAgente(req, res) {
+    const id = req.params.id;
+    await getAgenteOrThrowErrorMsg(id);
+
+    const casos = await casosRepository.findByAgenteId(id);
+    if (casos.length === 0) {
+        throw new ErrorMsg(404, `Não foi possível encontrar casos para o agente de Id: ${id}`);
+    }
+    res.status(200).json(casos);
+}
+
+async function postAgente(req, res) {
+    const agente = req.body;
+    const createdAgente = await agentesRepository.create(agente);
+    res.status(201).json(createdAgente);
+}
+
+async function putAgente(req, res) {
+    const id = req.params.id;
+    await getAgenteOrThrowErrorMsg(id);
+
+    const agente = req.body;
+    const updatedAgente = await agentesRepository.update(id, agente);
+    res.status(200).json(updatedAgente);
+}
+
+async function patchAgente(req, res) {
+    const id = req.params.id;
+    await getAgenteOrThrowErrorMsg(id);
+
+    const agente = req.body;
+    if (Object.keys(agente).length === 0) {
+        throw new ErrorMsg(
+            400,
+            'Deve haver pelo menos um campo para realizar a atualização de agente'
+        );
+    }
+    const updatedAgente = await agentesRepository.update(id, agente);
+    res.status(200).json(updatedAgente);
+}
+
+async function deleteAgente(req, res) {
+    const id = req.params.id;
+    await getAgenteOrThrowErrorMsg(id);
+    await agentesRepository.remove(id);
+    res.status(204).send();
+}
 
 module.exports = {
     getAllAgentes,
     getAgenteById,
-    createAgente,
-    updateAgenteCompleto,
-    updateAgenteParcial,
+    getCasosByAgente,
+    postAgente,
+    putAgente,
+    patchAgente,
     deleteAgente,
-    findCasosByAgente,
+    getAgenteOrThrowErrorMsg,
 };

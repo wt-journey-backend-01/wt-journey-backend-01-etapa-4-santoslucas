@@ -1,57 +1,88 @@
 const db = require('../db/db');
+const ErrorMsg = require('../utils/ErrorMsg');
 
 async function findAll(filters) {
-  const query = db('agentes');
+    try {
+        const query = db('agentes');
+        if (filters.cargo) {
+            query.where('cargo', filters.cargo);
+        }
 
-  if (filters?.cargo) {
-    query.where('cargo', 'ilike', `%${filters.cargo}%`);
-  }
+        if (filters.sort === 'dataDeIncorporacao') {
+            query.orderBy('dataDeIncorporacao', 'asc');
+        } else if (filters.sort === '-dataDeIncorporacao') {
+            query.orderBy('dataDeIncorporacao', 'desc');
+        }
 
-  if (filters?.dataDeIncorporacaoInicio) {
-    query.whereRaw('"dataDeIncorporacao" >= ?::date', [filters.dataDeIncorporacaoInicio]);
-  }
-  if (filters?.dataDeIncorporacaoFim) {
-    query.whereRaw('"dataDeIncorporacao" <= ?::date', [filters.dataDeIncorporacaoFim]);
-  }
+        const agentes = await query;
 
-  // sorting: apply after filters
-  if (filters?.sort) {
-    const order = filters.sort.startsWith('-') ? 'desc' : 'asc';
-    const column = filters.sort.replace('-', '');
-
-    const validSortColumns = ['nome', 'dataDeIncorporacao', 'cargo'];
-    if (validSortColumns.includes(column)) {
-      // Use orderByRaw with quoted column name to avoid case-sensitive issues
-      query.orderByRaw(`"${column}" ${order}`);
+        return agentes.map((agente) => ({
+            ...agente,
+            dataDeIncorporacao: agente.dataDeIncorporacao.toISOString().split('T')[0],
+        }));
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possivel buscar agentes');
     }
-  }
-
-  const rows = await query.select('*');
-  return rows;
 }
 
 async function findById(id) {
-  const agente = await db('agentes').where({ id }).first();
-  return agente;
+    try {
+        const agente = await db('agentes').where({ id: id }).first();
+        if (!agente) {
+            return null;
+        }
+        return {
+            ...agente,
+            dataDeIncorporacao: agente.dataDeIncorporacao.toISOString().split('T')[0],
+        };
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível encontrar agente por Id');
+    }
 }
 
 async function create(agente) {
-  const [novoAgente] = await db('agentes').insert(agente).returning('*');
-  return novoAgente;
+    try {
+        const [createdAgente] = await db('agentes').insert(agente, ['*']);
+        return {
+            ...createdAgente,
+            dataDeIncorporacao: createdAgente.dataDeIncorporacao.toISOString().split('T')[0],
+        };
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível criar agente');
+    }
 }
 
-async function update(id, data) {
-  // Ensure the record exists before updating to allow controllers to return 404 reliably
-  const existing = await findById(id);
-  if (!existing) return null;
+async function update(id, updatedAgenteData) {
+    try {
+        const [updatedAgente] = await db('agentes')
+            .where({ id: id })
+            .update(updatedAgenteData, ['*']);
 
-  const [agenteAtualizado] = await db('agentes').where({ id }).update(data).returning('*');
-  return agenteAtualizado;
+        if (!updatedAgente) {
+            return null;
+        }
+        return {
+            ...updatedAgente,
+            dataDeIncorporacao: updatedAgente.dataDeIncorporacao.toISOString().split('T')[0],
+        };
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível atualizar agente');
+    }
 }
 
 async function remove(id) {
-  const count = await db('agentes').where({ id }).del();
-  return count > 0;
+    try {
+        const deleted = await db('agentes').where({ id: id }).del();
+        return deleted > 0;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível remover agente');
+    }
 }
 
-module.exports = { findAll, findById, create, update, remove };
+module.exports = {
+    findAll,
+    findById,
+    create,
+    update,
+    remove,
+};

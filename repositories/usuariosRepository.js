@@ -1,19 +1,51 @@
-const db = require("../db/db");
+const db = require('../db/db');
+const ErrorMsg = require('../utils/ErrorMsg');
 
-async function createUser({ nome, email, senha }) {
-  return await db("usuarios").insert({ nome, email, senha }).returning("*");
+async function create(user) {
+    try {
+        const [createdUsuario] = await db('usuarios').insert(user, ['*']);
+        return createdUsuario;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível cadastrar o usuário');
+    }
 }
 
-async function findByEmail(email) {
-  return await db("usuarios").where({ email }).first();
-}
-
-async function deleteUser(id) {
-  return await db("usuarios").where({ id }).del();
+async function findUserByEmail(email) {
+    try {
+        const usuario = await db('usuarios').where({ email: email }).first();
+        if (!usuario) {
+            return null;
+        }
+        return usuario;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível encontrar o usuário pelo seu email');
+    }
 }
 
 async function findById(id) {
-  return await db("usuarios").where({ id }).first();
+    try {
+        const usuario = await db('usuarios').where({ id: id }).first();
+        if (!usuario) {
+            return null;
+        }
+        return usuario;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível encontrar o usuário pelo seu ID');
+    }
 }
 
-module.exports = { createUser, findByEmail, deleteUser, findById };
+async function remove(id) {
+    try {
+        const deletedUsuario = await db('usuarios').where({ id: id }).del();
+        return deletedUsuario > 0;
+    } catch {
+        throw new ErrorMsg(500, 'Não foi possível deletar o usuário');
+    }
+}
+
+module.exports = {
+    create,
+    remove,
+    findUserByEmail,
+    findById,
+};

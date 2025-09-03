@@ -1,58 +1,83 @@
 const db = require('../db/db');
+const ErrorMsg = require('../utils/ErrorMsg');
 
-async function findAll(filters) {
-    const query = db('casos');
+async function findAll(filters = {}) {
+    try {
+        let query = db('casos');
+        if (filters.agente_id) {
+            query.where({ agente_id: filters.agente_id });
+        }
+        if (filters.status) {
+            query.where({ status: filters.status });
+        }
 
-    if (filters?.status) {
-        query.where('status', filters.status);
+        const casos = await query;
+        return casos;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível buscar os casos.');
     }
-    if (filters?.agente_id) {
-        query.where('agente_id', filters.agente_id);
-    }
-    if (filters?.q) {
-        query.where((builder) => {
-            builder.where('titulo', 'ilike', `%${filters.q}%`)
-                   .orWhere('descricao', 'ilike', `%${filters.q}%`);
-        });
-    }
-
-    const rows = await query.select('*');
-    return rows;
 }
 
 async function findById(id) {
-    const caso = await db('casos').where({ id }).first();
-    return caso;
-}
-
-async function create(caso) {
-    const [novoCaso] = await db('casos').insert(caso).returning('*');
-    return novoCaso;
-}
-
-async function update(id, data) {
-    const existing = await findById(id);
-    if (!existing) return null;
-
-    const [casoAtualizado] = await db('casos').where({ id }).update(data).returning('*');
-    return casoAtualizado;
-}
-
-async function remove(id) {
-    const count = await db('casos').where({ id }).del();
-    return count > 0;
+    try {
+        const caso = await db('casos').where({ id: id }).first();
+        return caso;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível encontrar o caso por Id');
+    }
 }
 
 async function findByAgenteId(agente_id) {
-    const rows = await db('casos').where({ agente_id }).select('*');
-    return rows;
+    try {
+        const casos = await db('casos').where({ agente_id: agente_id });
+        return casos || [];
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível encontrar os casos por agente Id');
+    }
+}
+
+async function create(caso) {
+    try {
+        const [createdCaso] = await db('casos').insert(caso, ['*']);
+        return createdCaso;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível criar o caso');
+    }
+}
+
+async function update(id, updatedCasoData) {
+    try {
+        const [updatedCaso] = await db('casos').where({ id: id }).update(updatedCasoData, ['*']);
+        if (!updatedCaso) {
+            return null;
+        }
+        return updatedCaso;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível atualizar o caso');
+    }
+}
+
+async function remove(id) {
+    try {
+        const deletedCaso = await db('casos').where({ id: id }).del();
+        return deletedCaso > 0;
+    } catch (err) {
+        throw new ErrorMsg(500, 'Não foi possível deletar o caso');
+    }
+}
+
+async function search(q) {
+    return await db('casos').where(function () {
+        this.whereILike('titulo', `%${q}%`).orWhereILike('descricao', `%${q}%`);
+    });
 }
 
 module.exports = {
-  findAll,
-  findById,
-  create,
-  update,
-  remove,
-  findByAgenteId
+    findAll,
+    findById,
+    findByAgenteId,
+    create,
+    update,
+    remove,
+    search,
 };
