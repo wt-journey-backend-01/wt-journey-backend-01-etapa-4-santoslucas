@@ -1,6 +1,6 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 9 créditos restantes para usar o sistema de feedback AI.
+Você tem 8 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para santoslucas:
 
@@ -8,234 +8,241 @@ Nota final: **52.0/100**
 
 Olá, santoslucas! 👋🚀
 
-Primeiramente, parabéns pelo esforço e por já ter entregue uma aplicação com autenticação JWT funcionando, hashing de senha, proteção de rotas e até a documentação no INSTRUCTIONS.md! 🎉 Você conseguiu fazer o básico da segurança funcionar direitinho, incluindo o registro, login, logout, exclusão de usuários e o endpoint `/usuarios/me`. Isso é ótimo e mostra que você entendeu conceitos fundamentais de segurança e organização de código. 👏
-
-Além disso, seu projeto está muito bem estruturado, seguindo a arquitetura MVC com controllers, repositories, rotas, middlewares e utils, e a estrutura de diretórios está conforme o esperado pelo desafio. Isso facilita a manutenção e escalabilidade do código, parabéns por esse cuidado! 🗂️✨
+Primeiramente, parabéns pelo empenho até aqui! Você conseguiu implementar com sucesso toda a parte de usuários e autenticação, incluindo registro, login, logout, exclusão de usuários e o endpoint `/usuarios/me` para retornar os dados do usuário logado. Isso é uma vitória e tanto! 🎉👏
 
 ---
 
-## O que precisa de atenção para destravar a nota e os testes base
+## O que você acertou muito bem 🎯
 
-No entanto, percebi que os testes base relacionados a agentes e casos estão falhando, o que indica que a parte principal da API (CRUD de agentes e casos) ainda não está completamente correta. Esses testes são fundamentais porque garantem que a API funciona como esperado para os recursos centrais do sistema. Vamos analisar os pontos críticos e as possíveis causas para essas falhas.
+- **Autenticação JWT funcionando:** Seu middleware está protegendo as rotas `/agentes` e `/casos` corretamente, retornando `401 Unauthorized` quando o token não é fornecido ou inválido.
+- **Validação robusta no registro:** Você validou todos os campos obrigatórios, o formato da senha, e bloqueou campos extras.
+- **Hashing das senhas:** Uso correto do bcrypt para armazenar senhas hasheadas.
+- **Estrutura do projeto:** Sua organização de pastas e arquivos está alinhada com o esperado, incluindo os novos arquivos para autenticação (`authRoutes.js`, `authController.js`, `usuariosRepository.js`, `authMiddleware.js`).
+- **Documentação no `INSTRUCTIONS.md`:** Você explicou claramente o fluxo de autenticação e como usar o token JWT nas requisições.
 
----
-
-### 1. Testes base de AGENTS (Agentes) falhando
-
-**Falhas principais:**
-
-- Criação de agentes com status 201 e dados corretos
-- Listagem de agentes com status 200 e dados corretos
-- Busca por agente por ID com status 200 e dados corretos
-- Atualização completa (PUT) e parcial (PATCH) com status 200 e dados atualizados
-- Deleção de agentes com status 204
-- Recebimento dos status 400 e 404 para payloads ou IDs inválidos
+Além disso, você passou vários testes bônus importantes, como filtragem de agentes por data e ordenação, busca de casos por agente, e detalhes do usuário autenticado. Isso mostra que você foi além do básico! 🌟
 
 ---
 
-#### Análise detalhada
+## Agora, vamos analisar juntos os testes que falharam e entender o que está acontecendo para que você possa destravar tudo! 🕵️‍♂️🔍
 
-Olhando seu código em `controllers/agentesController.js` e `repositories/agentesRepository.js`, a lógica parece estar correta e bem organizada. Você valida os campos, verifica formatos de UUID, datas, e trata erros com mensagens claras. O repositório usa Knex corretamente para consultar e manipular o banco.
+### Testes que falharam (base) relacionados a **Agentes** e **Casos**
 
-Porém, o principal ponto que pode estar causando as falhas nos testes é a **incompatibilidade do tipo do ID dos agentes**. Na sua migration `20250810173028_solution_migrations.js`, você criou as tabelas `agentes` e `casos` com coluna `id` do tipo `uuid` gerado pelo `gen_random_uuid()`.
+A maioria dos testes que falharam são operações básicas de CRUD nos agentes e casos, por exemplo:
 
-No entanto, seu código no controller e repositório está validando o ID com regex para UUID, o que está correto, mas o erro pode estar na forma como os IDs são retornados ou manipulados.
+- Criar agente (`POST /agentes`) com status 201 e dados corretos
+- Listar agentes (`GET /agentes`)
+- Buscar agente por ID
+- Atualizar agente (PUT e PATCH)
+- Deletar agente
+- Vários erros 400 e 404 para payloads ou IDs inválidos
+- Mesmas operações para casos
 
-**Possível causa raiz:**  
-- Você pode estar retornando os agentes com IDs no formato UUID, mas os testes esperam que o campo `id` seja uma string UUID válida, e algum lugar pode estar retornando IDs nulos, vazios ou com outro tipo.
-- Outra possibilidade é que o banco não esteja executando as migrations corretamente, então a tabela `agentes` pode não estar criada ou com o schema esperado.
+Esses testes indicam que os endpoints de agentes e casos, que são protegidos pelo middleware de autenticação, não estão funcionando corretamente para as operações básicas.
 
-**Como verificar:**  
-- Confirme se as migrations foram executadas com sucesso (`npx knex migrate:latest`).
-- Verifique no banco se a tabela `agentes` existe e possui os dados com IDs UUID.
-- Teste manualmente os endpoints `/agentes` para ver se os dados retornados possuem o campo `id` com UUID válido.
+---
 
-**Sugestão de melhoria no código:**  
-No seu `repositories/agentesRepository.js`, você está usando `db('agentes').insert(agente).returning('*')` para criar agentes, o que deve retornar o agente com ID gerado. Certifique-se que o banco está mesmo gerando o UUID e retornando corretamente.
+### Análise da causa raiz: Por que os testes de agentes e casos falham?
 
-Você também pode adicionar logs temporários para inspecionar os dados retornados:
+1. **Middleware de autenticação está ativo nas rotas de agentes e casos, mas o token pode não estar sendo aceito ou as operações não estão respondendo corretamente.**
+
+   - Você aplicou o middleware `authMiddleware` no `server.js` para as rotas `/agentes` e `/casos`, o que está correto:
+
+     ```js
+     app.use("/agentes", authMiddleware, agentesRoutes);
+     app.use("/casos", authMiddleware, casosRoutes);
+     ```
+
+2. **Possível problema na manipulação dos dados nos controllers ou repositories de agentes e casos.**
+
+   - Seus controllers e repositories para agentes e casos parecem muito bem estruturados, com validações e uso correto do Knex.
+
+3. **Um ponto crítico: o ID dos agentes e casos é UUID, mas na migration inicial (20250810173028_solution_migrations.js) você criou as tabelas `agentes` e `casos` com ID do tipo UUID com default `gen_random_uuid()`, mas no seed de agentes você está inserindo agentes com IDs automáticos?**
+
+   - Olhando o seed `agentes.js`, você está inserindo agentes sem especificar o ID, o que é correto, pois o UUID é gerado automaticamente.
+
+4. **O problema pode estar no fato de que os testes esperam IDs no formato UUID, mas no seu código, no controller `agentesController.js` e `casosController.js`, você está validando o ID com regex UUID e retornando 400 se inválido, o que está correto.**
+
+5. **Mas um detalhe importante: no arquivo `db/migrations/20250810173028_solution_migrations.js`, na criação das tabelas, você não criou a tabela `usuarios`. Essa está em outra migration `20250821040821_create_usuarios_table.js`, o que está certo.**
+
+6. **Outro ponto que pode estar causando falha: no seu código do controller de agentes, ao criar o agente, você está esperando o campo `dataDeIncorporacao` como string no formato ISO, e validando com `isValidDate()`, o que é correto.**
+
+7. **No entanto, o teste "AGENTS: Cria agentes corretamente com status code 201 e os dados inalterados do agente mais seu ID" falha, o que indica que pode estar faltando retornar o agente criado corretamente, ou o status code está errado.**
+
+   - No seu `createAgente`:
+
+     ```js
+     const newAgente = await agentesRepository.create({ nome, dataDeIncorporacao, cargo });
+     res.status(201).json(newAgente);
+     ```
+
+     Isso parece correto.
+
+8. **Possível motivo: no arquivo `repositories/agentesRepository.js`, o método `create` usa `.insert(agente).returning('*')`. No PostgreSQL, o `returning('*')` funciona, mas pode falhar se o client não estiver configurado para retornar os dados.**
+
+   - Certifique-se de que o seu banco está configurado para aceitar o `returning('*')` e que a versão do PostgreSQL suporta isso (você está usando postgres:15, que suporta).
+
+9. **Outro ponto importante: no seu migration inicial, você criou as tabelas `agentes` e `casos` com o campo `id` como UUID gerado com `gen_random_uuid()`. Isso exige que a extensão `pgcrypto` esteja instalada, e você tem o comando para criar a extensão no migration, o que está correto.**
+
+10. **Por fim, uma possível causa raiz para os testes falharem pode ser a falta da seed dos agentes e casos rodando corretamente, ou o banco estar sem dados para os testes.**
+
+---
+
+### Recomendações para destravar os testes de agentes e casos
+
+- **Garanta que as migrations e seeds foram executadas corretamente.** Rode:
+
+  ```bash
+  npx knex migrate:latest
+  npm run db:reset
+  ```
+
+  Isso vai garantir que as tabelas estão criadas e os dados iniciais estão no banco.
+
+- **Verifique o formato dos IDs retornados nas respostas.** Os testes esperam UUIDs válidos. Você está usando `uuid` no banco, então isso deve estar ok.
+
+- **Confirme que o seu servidor está rodando com o `.env` correto, especialmente as variáveis do banco e `JWT_SECRET`.**
+
+- **Teste manualmente os endpoints de agentes e casos com um token JWT válido para garantir que eles estão funcionando.**
+
+- **Se ainda falhar, adicione logs nos controllers para verificar se as requisições estão chegando e se os dados estão corretos.**
+
+---
+
+### Sobre os testes de erros 400 e 404
+
+Você fez um ótimo trabalho tratando erros de validação, como formato de ID inválido, campos obrigatórios faltando, e retornando os status codes corretos. Isso está muito bem implementado e é essencial para uma API profissional.
+
+---
+
+### Sobre os testes bônus que você passou
+
+Você implementou filtros complexos, busca por palavras-chave, ordenação, e o endpoint `/usuarios/me`. Isso mostra que você tem domínio sobre consultas avançadas e segurança. Continue assim! 🚀
+
+---
+
+### Pontos que você pode melhorar e conferir no seu código
+
+1. **Validação do formato UUID**
+
+   - Você usa a regex para validar UUID, que está correta.
+   - Mas cuidado para garantir que o ID passado nas rotas seja sempre string e não undefined.
+
+2. **Tratamento de erros no banco**
+
+   - Em alguns pontos você retorna 500 com mensagens genéricas. Para facilitar o debug, durante o desenvolvimento, adicione logs detalhados dos erros (ex: `console.error(error)`).
+
+3. **Middleware de autenticação**
+
+   - Seu middleware está correto, mas certifique-se de que o header `Authorization` está sempre no formato `Bearer <token>`.
+   - Caso o token venha com espaços extras ou formato errado, seu middleware pode falhar.
+
+4. **Tokens JWT**
+
+   - No login, você retorna o token no campo `acess_token`, mas na documentação e exemplos você usa `access_token` (com dois "c"). Isso pode causar falha nos testes que esperam o nome correto do campo.
+
+     Veja seu código no `authController.js`:
+
+     ```js
+     res.status(200).json({ acess_token: token });
+     ```
+
+     O correto seria:
+
+     ```js
+     res.status(200).json({ access_token: token });
+     ```
+
+     Esse pequeno detalhe pode estar causando falha nos testes que esperam o campo `access_token`.
+
+5. **Logout**
+
+   - Você implementou logout como endpoint simbólico, o que está correto, já que invalidar JWT é complexo.
+
+6. **Exclusão de usuários**
+
+   - Está implementado corretamente com validação de ID.
+
+---
+
+### Correção sugerida para o campo do token no login (provável causa de falha)
+
+No seu `authController.js`, altere:
 
 ```js
-async function create(agente) {
-  const [novoAgente] = await db('agentes').insert(agente).returning('*');
-  console.log('Novo agente criado:', novoAgente); // log para debug
-  return novoAgente;
-}
+res.status(200).json({ acess_token: token });
 ```
 
----
-
-### 2. Testes base de CASES (Casos) falhando
-
-**Falhas principais:**
-
-- Criação de casos com status 201 e dados corretos
-- Listagem de casos com status 200 e dados corretos
-- Busca por caso por ID com status 200 e dados corretos
-- Atualização completa (PUT) e parcial (PATCH) com status 200 e dados atualizados
-- Deleção de casos com status 204
-- Recebimento dos status 400 e 404 para payloads ou IDs inválidos
-
----
-
-#### Análise detalhada
-
-No `controllers/casosController.js` e `repositories/casosRepository.js`, a estrutura também parece correta, com validações e uso do Knex para manipulação do banco.
-
-Porém, repare na migration `20250810173028_solution_migrations.js` que a tabela `casos` tem o campo `id` como UUID, o campo `agente_id` como UUID que referencia `agentes.id`, e o campo `status` como enum com valores `'aberto'` e `'solucionado'`.
-
-Um ponto que pode causar falha é se o campo `agente_id` estiver sendo passado como `null` ou em formato incorreto, ou se a validação do status estiver falhando.
-
-No seu código, você já valida o campo `status` para aceitar apenas `'aberto'` e `'solucionado'`, e valida `agente_id` para ser UUID e existir no banco.
-
-**Possível causa raiz:**
-
-- A criação e atualização dos casos pode estar falhando por conta da validação do `agente_id`, especialmente quando ele é `null` (caso não atribuído).
-- Verifique se seu código trata corretamente o `agente_id` nulo nas operações de criação e atualização.
-- Também confira se a migration foi aplicada corretamente e a tabela `casos` existe com o schema esperado.
-
-**Sugestão de melhoria:**
-
-No `createCaso` e `updateCasoCompleto` do controller, você pode garantir que `agente_id` seja `null` explicitamente se não for informado:
+para
 
 ```js
-const novoCaso = await casosRepository.create({ titulo, descricao, status, agente_id: agente_id || null });
+res.status(200).json({ access_token: token });
 ```
 
-Você já faz isso no update completo, mas vale reforçar na criação também.
+Isso é importante porque os testes esperam exatamente o campo `access_token` para validar o login.
 
 ---
 
-### 3. Testes base de autenticação passaram — ótimo!
-
-Você implementou corretamente:
-
-- Registro com validação de senha forte
-- Login com geração do JWT e expiração
-- Middleware que protege as rotas `/agentes` e `/casos`
-- Logout simbólico
-- Exclusão de usuário
-- Endpoint `/usuarios/me`
-
-O middleware `authMiddleware.js` está bem implementado, verificando o token no header `Authorization` e tratando erros.
-
----
-
-### 4. Testes bônus parcialmente falharam
-
-Você implementou os endpoints de filtragem e busca, mas os testes bônus indicam que ainda há melhorias a fazer para passar todos.
-
-Isso pode estar relacionado a detalhes na query de filtragem ou na resposta dos endpoints.
-
----
-
-## Recomendações específicas para você avançar
-
-1. **Revise as migrations e a persistência no banco**  
-   Certifique-se que as migrations foram aplicadas e as tabelas criadas com os tipos corretos (UUID para IDs). Use `npx knex migrate:latest` e cheque no banco.
-
-2. **Teste manualmente os endpoints de agentes e casos**  
-   Use o Postman ou curl para criar, listar, atualizar e deletar agentes e casos. Veja se os dados retornados estão corretos, especialmente os IDs.
-
-3. **Verifique o tratamento do campo `agente_id` nos casos**  
-   Garanta que `null` seja tratado corretamente, e que a validação do UUID esteja funcionando.
-
-4. **Confirme o formato dos IDs e os status HTTP retornados**  
-   Os testes esperam status 201 para criação, 200 para sucesso, 204 para deleção, 400 para payload inválido e 404 para recursos não encontrados. Seu código já trata isso, mas valide com testes manuais.
-
-5. **Considere adicionar logs temporários para debug**  
-   Para entender onde o fluxo pode estar falhando, logs no controller e repository ajudam a rastrear dados.
-
----
-
-## Exemplos para você comparar e ajustar
-
-### Exemplo de criação de agente com retorno correto e status 201:
+### Exemplo corrigido do trecho do login:
 
 ```js
-async function createAgente(req, res) {
+async function login(req, res) {
   try {
-    const { nome, dataDeIncorporacao, cargo } = req.body;
-    if (!nome || typeof nome !== 'string' || nome.trim() === '') {
-      return res.status(400).json({ message: 'O campo "nome" é obrigatório.' });
+    const { email, senha } = req.body;
+
+    const user = await usuariosRepository.findByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: "Credenciais inválidas" });
     }
-    if (!cargo || typeof cargo !== 'string' || cargo.trim() === '') {
-      return res.status(400).json({ message: 'O campo "cargo" é obrigatório.' });
+
+    const isValid = await bcrypt.compare(senha, user.senha);
+    if (!isValid) {
+      return res.status(401).json({ error: "Credenciais inválidas" });
     }
-    if (!dataDeIncorporacao || !isValidDate(dataDeIncorporacao)) {
-      return res.status(400).json({ message: 'O campo "dataDeIncorporacao" é obrigatório, deve ser uma data válida e não pode ser no futuro.' });
-    }
-    const newAgente = await agentesRepository.create({ nome, dataDeIncorporacao, cargo });
-    res.status(201).json(newAgente); // importante retornar o objeto criado
+
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Atenção aqui: campo correto é access_token
+    res.status(200).json({ access_token: token });
   } catch (error) {
-    res.status(500).json({ message: "Erro interno ao criar agente." });
+    res.status(500).json({ error: "Erro no login" });
   }
 }
 ```
 
-### Exemplo de criação de caso com `agente_id` tratado:
+---
 
-```js
-async function createCaso(req, res) {
-  try {
-    const { titulo, descricao, status, agente_id } = req.body;
+### Recursos para você se aprofundar e sanar dúvidas
 
-    if (!titulo || typeof titulo !== 'string' || titulo.trim() === '') {
-      return res.status(400).json({ message: 'O campo "titulo" é obrigatório.' });
-    }
-    if (!descricao || typeof descricao !== 'string' || descricao.trim() === '') {
-      return res.status(400).json({ message: 'O campo "descricao" é obrigatório.' });
-    }
-    if (!status || !['aberto', 'solucionado'].includes(status)) {
-      return res.status(400).json({ message: 'O campo "status" é obrigatório e deve ser "aberto" ou "solucionado".' });
-    }
-    if (agente_id) {
-      if(!UUID_REGEX.test(agente_id)) return res.status(400).json({ message: 'Formato de ID de agente inválido.' });
-      const agente = await agentesRepository.findById(agente_id);
-      if (!agente) {
-        return res.status(404).json({ message: 'Agente com o ID fornecido não foi encontrado.' });
-      }
-    }
-
-    const novoCaso = await casosRepository.create({ titulo, descricao, status, agente_id: agente_id || null });
-    res.status(201).json(novoCaso);
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno ao criar caso." });
-  }
-}
-```
+- Para entender melhor autenticação e JWT, recomendo assistir este vídeo feito pelos meus criadores, que explica os conceitos básicos e fundamentais da cibersegurança: https://www.youtube.com/watch?v=Q4LQOfYwujk  
+- Para aprofundar no uso do JWT na prática, este vídeo é excelente: https://www.youtube.com/watch?v=keS0JWOypIU  
+- Para entender bcrypt e hashing de senhas, veja: https://www.youtube.com/watch?v=L04Ln97AwoY  
+- Caso tenha dúvidas sobre estruturação e organização do projeto MVC, recomendo: https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s  
+- Se precisar revisar como configurar o banco com Docker e Knex (migrations e seeds), estes vídeos são muito úteis:  
+  - https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s  
+  - https://www.youtube.com/watch?v=dXWy_aGCW1E  
+  - https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
 
 ---
 
-## Recursos que recomendo para você aprofundar e corrigir esses pontos
+## Resumo rápido dos principais pontos para focar:
 
-- Para entender melhor a configuração do banco e as migrations com Knex e Docker, veja este vídeo:  
-  https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s  
-  Ele vai te ajudar a garantir que o banco está configurado corretamente e as migrations aplicadas.
-
-- Para manipulação de dados com Knex (select, insert, update), este vídeo é excelente:  
-  https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
-  Ajuda a dominar o Query Builder e evitar erros comuns.
-
-- Para autenticação e segurança, o vídeo feito pelos meus criadores que explica os conceitos básicos de cibersegurança é fundamental:  
-  https://www.youtube.com/watch?v=Q4LQOfYwujk
+- Corrija o nome do campo do token JWT no login para `access_token` (com dois "c").
+- Verifique se suas migrations e seeds estão rodando corretamente para popular o banco.
+- Teste manualmente os endpoints protegidos com um token JWT válido para garantir que estão funcionando.
+- Adicione logs para facilitar o debug dos erros internos (status 500).
+- Garanta que o header `Authorization` está no formato correto `Bearer <token>` nas requisições protegidas.
+- Continue reforçando as validações de entrada para evitar erros 400 e 404.
 
 ---
 
-## Resumo rápido do que focar para melhorar sua nota e passar os testes base
+santoslucas, você está no caminho certo! Seu código está bem estruturado e você já domina conceitos fundamentais de segurança e organização. Com esses pequenos ajustes, tenho certeza que você vai destravar todos os testes e subir sua nota para um nível excelente. 💪✨
 
-- [ ] Confirme que as migrations foram aplicadas e tabelas `agentes`, `casos` e `usuarios` existem com os schemas corretos (UUID para IDs).  
-- [ ] Teste manualmente os endpoints de agentes e casos para garantir que retornam dados corretos, especialmente o campo `id` com UUID válido.  
-- [ ] Garanta que o campo `agente_id` nos casos seja tratado corretamente, permitindo `null` e validando UUID quando presente.  
-- [ ] Verifique se os status HTTP retornados estão conforme o esperado (201 para criação, 200 para sucesso, 204 para deleção, 400/404 para erros).  
-- [ ] Use logs temporários para inspecionar dados retornados e identificar onde o fluxo pode estar quebrando.  
-- [ ] Continue mantendo sua organização de código e segurança, pois isso está muito bem feito!
+Continue firme, e qualquer dúvida, conte comigo para ajudar! 🚀👨‍💻👩‍💻
 
----
-
-santoslucas, você está no caminho certo! 🚀 Com esses ajustes e testes locais, tenho certeza que vai destravar todos os testes base e melhorar muito sua nota. Continue assim, focado e aprendendo! 💪 Qualquer dúvida, estou aqui para ajudar! 😉
-
-Um abraço e sucesso! 👊✨
+Um abraço e sucesso! 🤗🎉
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
